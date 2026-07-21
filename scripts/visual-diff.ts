@@ -39,6 +39,16 @@ const SECTIONS: Record<string, SectionConfig> = {
     selector: 'section.stats',
     appSelector: '[data-qa="proof-strip"]',
   },
+  pricing: {
+    id: 'pricing',
+    selector: '#pricing',
+    appSelector: '[data-qa="pricing"]',
+  },
+  transparency: {
+    id: 'transparency',
+    selector: '#transparency',
+    appSelector: '[data-qa="transparency"]',
+  },
   'hiw-card': {
     id: 'hiw-card',
     selector: '#how .hiw-card',
@@ -47,6 +57,11 @@ const SECTIONS: Record<string, SectionConfig> = {
     appArtSelector: '[data-qa="hiw-card-1"] .hiw-art',
     staticHiw: true,
     maskPhotoLayers: true,
+  },
+  footer: {
+    id: 'footer',
+    selector: 'footer',
+    appSelector: '[data-qa="footer"]',
   },
 };
 
@@ -82,6 +97,7 @@ type CaptureOptions = {
   normalizationPayload: NormalizationPayload;
   mode: CaptureMode;
   maskPhotoLayers: boolean;
+  hideFixedNav: boolean;
 };
 
 type CliOptions = {
@@ -322,7 +338,8 @@ async function normalizeReferencePage(page: Page): Promise<void> {
     });
 
     document.querySelectorAll('a.btn-primary').forEach((anchor) => {
-      if (anchor.textContent?.trim() === 'Get funded') {
+      const label = anchor.textContent?.trim();
+      if (label === 'Get funded' || label === 'Add to cart') {
         anchor.textContent = 'Start a challenge';
       }
     });
@@ -441,6 +458,54 @@ async function normalizeReferencePage(page: Page): Promise<void> {
     if (stack) {
       stack.style.transform = 'translateY(0)';
     }
+
+    const pricingSection = document.querySelector('#pricing');
+    if (pricingSection) {
+      const heading = pricingSection.querySelector('.sec-head h2');
+      if (heading) {
+        heading.textContent =
+          'Choose your challenge. One-time fee, 100% rebated at first payout.';
+      }
+    }
+
+    const transparencySection = document.querySelector('#transparency');
+    if (transparencySection) {
+      const metricValues = ['$412,908', '11.2%', '32'];
+      transparencySection.querySelectorAll('.big-metric .v').forEach((element, index) => {
+        const value = metricValues[index];
+        if (value) {
+          element.textContent = value;
+        }
+      });
+    }
+
+    const footerLegal = document.querySelector('footer .legal');
+    if (footerLegal && !footerLegal.textContent?.includes('Rules hash')) {
+      const rulesLine = document.createElement('p');
+      rulesLine.textContent = 'Rules hash: 0x0000…0000';
+      const geoLine = document.createElement('p');
+      geoLine.textContent =
+        'Trading availability varies by jurisdiction. Geo-restriction copy pending counsel review.';
+      footerLegal.append(rulesLine, geoLine);
+    }
+
+    const footer = document.querySelector('footer');
+    if (footer) {
+      const textWalker = document.createTreeWalker(
+        footer,
+        NodeFilter.SHOW_TEXT,
+      );
+      let textNode = textWalker.nextNode();
+      while (textNode) {
+        if (textNode.textContent?.includes('Payout')) {
+          textNode.textContent = textNode.textContent.replaceAll(
+            'Payout',
+            'Northbook',
+          );
+        }
+        textNode = textWalker.nextNode();
+      }
+    }
   });
 }
 
@@ -483,6 +548,12 @@ async function freezePageForCapture(
 
   if (options.mode === 'structure' && options.maskPhotoLayers) {
     await applyPhotoLayerMask(page);
+  }
+
+  if (options.hideFixedNav) {
+    await page.addStyleTag({
+      content: 'nav { visibility: hidden !important; }',
+    });
   }
 }
 
@@ -696,6 +767,7 @@ function buildCaptureOptions(
     normalizationPayload,
     mode,
     maskPhotoLayers: section.maskPhotoLayers ?? false,
+    hideFixedNav: section.id === 'footer',
   };
 }
 
@@ -788,6 +860,7 @@ async function runSelftest(sprint: number, appUrl: string): Promise<void> {
         normalizationPayload,
         mode: 'structure',
         maskPhotoLayers: false,
+        hideFixedNav: false,
       };
 
       const firstCapture = await captureOnFreshPage(

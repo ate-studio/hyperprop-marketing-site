@@ -25,9 +25,29 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: 'swap',
 });
 
+const siteDescription =
+  'Trade up to $100,000 of crypto perpetual capital on real exchange liquidity. Published pass rates, on-chain USDC payouts, rules you can read in five minutes.';
+
 export const metadata: Metadata = {
-  title: 'Northbook',
-  description: 'Northbook — on-chain prop trading firm',
+  metadataBase: new URL('https://northbook.xyz'),
+  title: 'Northbook — the prop firm that pays by smart contract',
+  description: siteDescription,
+  openGraph: {
+    title: 'Northbook — the prop firm that pays by smart contract',
+    description: siteDescription,
+    type: 'website',
+    // PENDING: confirm with CTO — final OG asset
+    images: [{ url: '/images/hero-markets.png' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Northbook — the prop firm that pays by smart contract',
+    description: siteDescription,
+    images: ['/images/hero-markets.png'],
+  },
+  icons: {
+    icon: [{ url: '/images/hero-markets.png', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({
