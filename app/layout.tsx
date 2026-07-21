@@ -1,39 +1,33 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { IBM_Plex_Mono, Inter, STIX_Two_Text } from 'next/font/google';
 
 import './globals.css';
 
 const inter = Inter({
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-inter',
+  display: 'swap',
 });
 
-// Sprint 0: wire serif + mono from design tokens.
-// STIX Two Text — confirmed on Google Fonts (fonts.google.com/specimen/STIX+Two+Text).
-// import { STIX_Two_Text } from 'next/font/google';
-// const stixTwoText = STIX_Two_Text({
-//   subsets: ['latin'],
-//   variable: '--font-stix-two-text',
-// });
-//
-// IBM Plex Mono — confirmed on Google Fonts.
-// import { IBM_Plex_Mono } from 'next/font/google';
-// const ibmPlexMono = IBM_Plex_Mono({
-//   subsets: ['latin'],
-//   weight: ['400', '500', '600'],
-//   variable: '--font-ibm-plex-mono',
-// });
-//
-// Local fallback (only if Google Fonts unavailable at build time):
-// import localFont from 'next/font/local';
-// const stixTwoText = localFont({
-//   src: '../public/fonts/STIXTwoText-Regular.woff2',
-//   variable: '--font-stix-two-text',
-// });
+const stixTwoText = STIX_Two_Text({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-stix',
+  display: 'swap',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-plex-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Northbook',
-  description: 'Northbook — on-chain prop trading firm (scaffold)',
+  description: 'Northbook — on-chain prop trading firm',
 };
 
 export default function RootLayout({
@@ -42,8 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${stixTwoText.variable} ${ibmPlexMono.variable}`}
+    >
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

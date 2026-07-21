@@ -28,9 +28,6 @@ yarn-error.log*
 # env files
 .env*
 
-# visual QA artifacts
-/qa-screenshots/
-
 # vercel
 .vercel
 
