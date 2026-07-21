@@ -31,6 +31,8 @@ For every sprint spec you receive:
 ### 2. Design token compliance
 - Zero raw hex colors, raw px font-sizes, raw border-radius, or one-off transition timings anywhere under `components/` or `app/` outside `globals.css` / `tailwind.config.ts`.
 - Verify with: `grep -rn "#[0-9a-fA-F]\{3,6\}\|[0-9]\+px" components/ app/*.tsx` — arbitrary Tailwind values referencing `var(--token)` are fine; literal hex/px are not.
+- Zero inline `style={...}` attributes in components. Verify with: `grep -rn "style=" components/ app/ --include="*.tsx"` — must return nothing. Per-instance values (e.g. a card's art image) become CSS classes or data-attribute rules in `globals.css`, not inline styles.
+- Any color/alpha literal (e.g. `rgba(...)`) that appears more than once in `globals.css` is promoted to a `:root` token and referenced via `var()` — define once, reuse everywhere.
 
 ### 3. Theme integrity
 - Toggling `.sec-invert` on any section's parent re-themes every child with nothing left unstyled or broken. Check in the dev server, not by source inspection alone.
@@ -69,7 +71,7 @@ For every sprint spec you receive:
 ### 10. Build hygiene, placeholders & copy
 - `npm run lint` and `npm run typecheck` both pass with zero errors.
 - No Lorem Ipsum, no unowned `TODO`, no broken image/link. Only the two sanctioned placeholders (pricing numbers, geo-restriction copy) may stay unfinished, marked exactly `// PENDING: <what and why>`.
-- No "no conflict of interest" or return/APY-promise language anywhere; CTAs use literal active verbs; comparison-table claims match Business Plan v3.0 §4 only.
+- No "no conflict of interest" or return/APY-promise language anywhere; CTAs use literal active verbs; comparison-table rows are limited to the four verifiable claims — on-chain payouts, visible reserve, no token, per-order transparency — no other comparative claims exist or may be invented.
 
 ## Git protocol (only after 10/10)
 
