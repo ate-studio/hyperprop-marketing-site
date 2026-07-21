@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { Eyebrow } from '@/components/ui/eyebrow';
+
 export const metadata: Metadata = {
   title: 'Theme tokens',
   robots: {
@@ -11,9 +13,7 @@ export const metadata: Metadata = {
 function ThemeDemoCard() {
   return (
     <article className="rounded-lg border border-line bg-paper-raised p-6 shadow-1">
-      <p className="font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink-60">
-        Theme demo
-      </p>
+      <Eyebrow>Theme demo</Eyebrow>
       <h2 className="mt-3 font-serif text-5xl font-normal leading-[1.06] tracking-[-0.018em] text-ink">
         Token architecture proof
       </h2>
