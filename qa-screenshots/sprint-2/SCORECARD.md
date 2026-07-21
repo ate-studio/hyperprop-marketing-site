@@ -23,22 +23,25 @@ Date: 2026-07-21
 
 ## Visual-diff scores (≤2% gate)
 
+Post audit fix #17 (integer paint-origin snap on capture targets):
+
 ```
-pricing @ 360px — 1.03%
-pricing @ 560px — 1.16%
-pricing @ 900px — 0.73%
-pricing @ 1180px — 0.67%
-transparency @ 360px — 1.51%
-transparency @ 560px — 1.08%
-transparency @ 900px — 0.99%
-transparency @ 1180px — 0.28%
-footer @ 360px — 1.94%
-footer @ 560px — 1.01%
-footer @ 900px — 0.39%
-footer @ 1180px — 1.80%
+pricing @ 360px — 0.00%
+pricing @ 560px — 0.10%
+pricing @ 900px — 0.00%
+pricing @ 1180px — 0.00%
+transparency @ 360px — 0.13%
+transparency @ 560px — 0.00%
+transparency @ 900px — 0.00%
+transparency @ 1180px — 0.00%
+footer @ 360px — 0.00%
+footer @ 560px — 0.00%
+footer @ 900px — 0.00%
+footer @ 1180px — 0.00%
+hiw-card @ 360–1180px — 0.36–0.90%
 ```
 
-(Sprint 1 sections nav/hero/proof/hiw-card also re-run — all ≤2%.)
+Prior run (pre-snap) peaked at footer 1.94%, pricing 1.16%, transparency 1.51%.
 
 ## Harness notes
 

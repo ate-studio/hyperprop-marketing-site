@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, Inter, STIX_Two_Text } from 'next/font/google';
 
+import { SITE_URL } from '@/lib/site-url';
+
 import './globals.css';
 
 const inter = Inter({
@@ -29,7 +31,7 @@ const siteDescription =
   'Trade up to $100,000 of crypto perpetual capital on real exchange liquidity. Published pass rates, on-chain USDC payouts, rules you can read in five minutes.';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://northbook.xyz'),
+  metadataBase: new URL(SITE_URL),
   title: 'Northbook — the prop firm that pays by smart contract',
   description: siteDescription,
   openGraph: {
@@ -44,9 +46,6 @@ export const metadata: Metadata = {
     title: 'Northbook — the prop firm that pays by smart contract',
     description: siteDescription,
     images: ['/images/hero-markets.png'],
-  },
-  icons: {
-    icon: [{ url: '/images/hero-markets.png', type: 'image/png' }],
   },
 };
 

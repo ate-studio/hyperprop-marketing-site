@@ -557,6 +557,24 @@ async function freezePageForCapture(
   }
 }
 
+async function snapCaptureTargetToIntegerPaintOrigin(
+  page: Page,
+  selector: string,
+): Promise<void> {
+  await page.locator(selector).first().evaluate((element) => {
+    const target = element as HTMLElement;
+    const documentTop = target.getBoundingClientRect().top + window.scrollY;
+    const fraction = documentTop - Math.floor(documentTop);
+
+    if (fraction < 0.001) {
+      return;
+    }
+
+    target.style.position = 'relative';
+    target.style.top = `-${fraction}px`;
+  });
+}
+
 async function captureSectionScreenshot(
   page: Page,
   targetUrl: string,
@@ -572,6 +590,7 @@ async function captureSectionScreenshot(
   const element = page.locator(selector).first();
   await element.waitFor({ state: 'visible' });
   await element.scrollIntoViewIfNeeded();
+  await snapCaptureTargetToIntegerPaintOrigin(page, selector);
   await page.waitForTimeout(CAPTURE_SETTLE_MS);
 
   const screenshot = await element.screenshot();
