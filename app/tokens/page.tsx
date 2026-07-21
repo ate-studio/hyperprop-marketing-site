@@ -14,9 +14,9 @@ function ThemeDemoCard() {
       <p className="font-mono text-xs font-medium uppercase tracking-[0.12em] text-ink-60">
         Theme demo
       </p>
-      <h1 className="mt-3 font-serif text-5xl font-normal leading-[1.06] tracking-[-0.018em] text-ink">
+      <h2 className="mt-3 font-serif text-5xl font-normal leading-[1.06] tracking-[-0.018em] text-ink">
         Token architecture proof
-      </h1>
+      </h2>
       <div className="mt-6 border-b border-line pb-3">
         <div className="flex items-baseline justify-between gap-4 font-mono text-sm">
           <span className="text-ink-60">Payout</span>
@@ -41,6 +41,7 @@ function ThemeDemoCard() {
 export default function TokensPage() {
   return (
     <div className="mx-auto max-w-maxw px-7 py-section-y">
+      <h1 className="sr-only">Northbook theme token demo</h1>
       <section className="py-section-y-phone">
         <ThemeDemoCard />
       </section>

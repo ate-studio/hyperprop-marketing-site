@@ -7,6 +7,8 @@ import { PNG } from 'pngjs';
 import { chromium, type Browser, type Page } from 'playwright';
 
 const VIEWPORTS = [360, 560, 900, 1180] as const;
+const SELFTEST_MAX_MISMATCH_PCT = 0.05;
+const CAPTURE_SETTLE_MS = 250;
 
 type SectionConfig = {
   id: string;
@@ -84,22 +86,42 @@ async function launchBrowser(): Promise<Browser> {
   }
 }
 
-async function preparePage(page: Page, targetUrl: string, width: number): Promise<void> {
-  await page.setViewportSize({ width, height: 1200 });
-  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+async function freezePageForCapture(page: Page): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => {
+    document.querySelectorAll('.rv, .rv-scale, [data-stagger]').forEach((element) => {
+      element.classList.add('in');
+    });
+
+    const style = document.createElement('style');
+    style.setAttribute('data-visual-diff', 'freeze');
+    style.textContent =
+      '*,*::before,*::after{transition:none!important;animation:none!important}';
+    document.head.appendChild(style);
+  });
 }
 
-async function screenshotSelector(
+async function captureSectionScreenshot(
   page: Page,
+  targetUrl: string,
+  width: number,
   selector: string,
 ): Promise<Buffer> {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width, height: 1200 });
+  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  await freezePageForCapture(page);
+
   const element = page.locator(selector).first();
   await element.waitFor({ state: 'visible' });
+  await element.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(CAPTURE_SETTLE_MS);
+
   const screenshot = await element.screenshot();
   if (!screenshot) {
     throw new Error(`Failed to capture screenshot for selector ${selector}`);
   }
+
   return screenshot;
 }
 
@@ -184,35 +206,70 @@ async function runPairDiff(options: {
   return result.mismatchPct;
 }
 
+async function captureOnFreshPage(
+  browser: Browser,
+  targetUrl: string,
+  width: number,
+  selector: string,
+): Promise<Buffer> {
+  const page = await browser.newPage();
+  try {
+    return await captureSectionScreenshot(page, targetUrl, width, selector);
+  } finally {
+    await page.close();
+  }
+}
+
 async function runSelftest(sprint: number): Promise<void> {
   const outputDir = path.join(ROOT, 'qa-screenshots', `sprint-${sprint}`);
   ensureDir(outputDir);
 
   const scores: string[] = [];
   const browser = await launchBrowser();
-  const page = await browser.newPage();
+  let failed = false;
 
   try {
     for (const width of VIEWPORTS) {
-      await preparePage(page, REFERENCE_URL, width);
-      const screenshot = await screenshotSelector(page, '#transparency');
-      await runPairDiff({
+      const firstCapture = await captureOnFreshPage(
+        browser,
+        REFERENCE_URL,
+        width,
+        '#transparency',
+      );
+      const secondCapture = await captureOnFreshPage(
+        browser,
+        REFERENCE_URL,
+        width,
+        '#transparency',
+      );
+
+      const mismatchPct = await runPairDiff({
         outputDir,
         sectionId: 'transparency-selftest',
         width,
-        referenceBuffer: screenshot,
-        appBuffer: screenshot,
+        referenceBuffer: firstCapture,
+        appBuffer: secondCapture,
         scores,
       });
+
+      if (mismatchPct > SELFTEST_MAX_MISMATCH_PCT) {
+        failed = true;
+        console.error(
+          `Selftest exceeded ${SELFTEST_MAX_MISMATCH_PCT.toFixed(2)}% at ${width}px`,
+        );
+      }
     }
   } finally {
-    await page.close();
     await browser.close();
   }
 
   const scoresPath = path.join(outputDir, 'scores.txt');
   fs.writeFileSync(scoresPath, `${scores.join('\n')}\n`);
   console.log(`Scores written to ${scoresPath}`);
+
+  if (failed) {
+    process.exit(1);
+  }
 }
 
 async function runVisualDiff(options: CliOptions): Promise<void> {
@@ -230,17 +287,22 @@ async function runVisualDiff(options: CliOptions): Promise<void> {
 
   const scores: string[] = [];
   const browser = await launchBrowser();
-  const appPage = await browser.newPage();
-  const refPage = await browser.newPage();
 
   try {
     for (const section of sectionEntries) {
       for (const width of VIEWPORTS) {
-        await preparePage(refPage, REFERENCE_URL, width);
-        const referenceBuffer = await screenshotSelector(refPage, section.selector);
-
-        await preparePage(appPage, options.url, width);
-        const appBuffer = await screenshotSelector(appPage, section.selector);
+        const referenceBuffer = await captureOnFreshPage(
+          browser,
+          REFERENCE_URL,
+          width,
+          section.selector,
+        );
+        const appBuffer = await captureOnFreshPage(
+          browser,
+          options.url,
+          width,
+          section.selector,
+        );
 
         await runPairDiff({
           outputDir,
@@ -253,8 +315,6 @@ async function runVisualDiff(options: CliOptions): Promise<void> {
       }
     }
   } finally {
-    await appPage.close();
-    await refPage.close();
     await browser.close();
   }
 
