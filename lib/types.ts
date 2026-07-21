@@ -1,5 +1,15 @@
-// Shared interfaces — Sprint 0+
-//
-// export interface ProofMetrics {
-//   // filled from reference/Northbook_-_design_system.md
-// }
+export interface ProofMetrics {
+  reserveBalanceUsd: number;
+  totalPaidOutUsd: number;
+  medianTimeToPayMinutes: number;
+  publishedPassRatePct: number;
+}
+
+/** Consumed in Sprint 2 */
+export interface PayoutLedgerEntry {
+  settledAt: string;
+  traderTag: string;
+  amountUsdc: number;
+  txHash: string;
+  txUrl: string;
+}
