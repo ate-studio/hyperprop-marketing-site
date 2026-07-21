@@ -37,7 +37,7 @@ For every sprint spec you receive:
 
 ### 4. Color & type discipline
 - No color outside the blueprint family and the `--up`/`--down` semantic tokens appears anywhere, except the Discord brand button (`#5865F2`).
-- Every heading/numeral renders in STIX Two Text; every uppercase label/tag/tx-hash renders in IBM Plex Mono; all prose renders in Inter. Confirm via computed styles in devtools.
+- Type families follow design doc §3–§4: display headings, prices, and big display numbers render in STIX Two Text; data-row/tabular numerals, uppercase labels, tags, and tx-hashes render in IBM Plex Mono; prose renders in Inter. Where the reference HTML's computed style for the equivalent element differs from this rule of thumb (e.g. mono stat values in `.stat .v`, sans uppercase `.hiw-card h3` titles), the reference wins. Confirm via computed styles in devtools.
 
 ### 5. Responsive behavior
 - No horizontal scroll, overlap, or broken layout at 360 / 560 / 900 / 1180px, and the breakpoint *behavior* (what collapses/stacks/reflows) matches design doc §8.
