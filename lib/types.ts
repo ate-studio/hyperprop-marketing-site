@@ -3,6 +3,8 @@ export interface ProofMetrics {
   totalPaidOutUsd: number;
   medianTimeToPayMinutes: number;
   publishedPassRatePct: number;
+  monthlyPaidOutUsd: number;
+  payoutCount30d: number;
 }
 
 /** Consumed in Sprint 2 */

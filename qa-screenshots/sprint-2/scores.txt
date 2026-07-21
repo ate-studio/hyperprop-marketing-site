@@ -1,0 +1,36 @@
+nav @ 360px — 0.00%
+nav @ 560px — 0.00%
+nav @ 900px — 0.00%
+nav @ 1180px — 0.00%
+hero @ 360px — 0.00%
+hero @ 560px — 0.00%
+hero @ 900px — 0.00%
+hero @ 1180px — 0.00%
+hero-art @ 360px — 0.01% (4x)
+hero-art @ 560px — 0.00% (4x)
+hero-art @ 900px — 0.06% (4x)
+hero-art @ 1180px — 0.05% (4x)
+proof @ 360px — 0.23%
+proof @ 560px — 0.15%
+proof @ 900px — 0.19%
+proof @ 1180px — 0.30%
+pricing @ 360px — 0.00%
+pricing @ 560px — 0.10%
+pricing @ 900px — 0.00%
+pricing @ 1180px — 0.00%
+transparency @ 360px — 0.13%
+transparency @ 560px — 0.00%
+transparency @ 900px — 0.00%
+transparency @ 1180px — 0.00%
+hiw-card @ 360px — 0.37%
+hiw-card @ 560px — 0.90%
+hiw-card @ 900px — 0.36%
+hiw-card @ 1180px — 0.36%
+hiw-card-art @ 360px — 0.64% (4x)
+hiw-card-art @ 560px — 0.71% (4x)
+hiw-card-art @ 900px — 0.31% (4x)
+hiw-card-art @ 1180px — 0.33% (4x)
+footer @ 360px — 0.00%
+footer @ 560px — 0.00%
+footer @ 900px — 0.00%
+footer @ 1180px — 0.00%

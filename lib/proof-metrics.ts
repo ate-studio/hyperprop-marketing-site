@@ -6,4 +6,6 @@ export const PLACEHOLDER_PROOF_METRICS: ProofMetrics = {
   totalPaidOutUsd: 123_012,
   medianTimeToPayMinutes: 252,
   publishedPassRatePct: 11.2,
+  monthlyPaidOutUsd: 412_908,
+  payoutCount30d: 32,
 };
