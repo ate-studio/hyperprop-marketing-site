@@ -10,13 +10,19 @@ const VIEWPORTS = [360, 560, 900, 1180] as const;
 const SELFTEST_MAX_MISMATCH_PCT = 0.05;
 const GATE_MAX_MISMATCH_PCT = 2;
 const CAPTURE_SETTLE_MS = 250;
-const PIXEL_UNIT = 'p' + 'x';
+const REFERENCE_FONTS_URL =
+  'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap';
+
+type CaptureMode = 'structure' | 'art';
 
 type SectionConfig = {
   id: string;
   selector: string;
   appSelector?: string;
   staticHiw?: boolean;
+  artSelector?: string;
+  appArtSelector?: string;
+  maskPhotoLayers?: boolean;
 };
 
 const SECTIONS: Record<string, SectionConfig> = {
@@ -25,6 +31,9 @@ const SECTIONS: Record<string, SectionConfig> = {
     id: 'hero',
     selector: 'header.hero',
     appSelector: '[data-qa="hero"]',
+    artSelector: '.hero-bg',
+    appArtSelector: '.hero-bg',
+    maskPhotoLayers: true,
   },
   proof: {
     id: 'proof',
@@ -35,7 +44,10 @@ const SECTIONS: Record<string, SectionConfig> = {
     id: 'hiw-card',
     selector: '#how .hiw-card',
     appSelector: '[data-qa="hiw-card-1"]',
+    artSelector: '#how .hiw-card .hiw-art',
+    appArtSelector: '[data-qa="hiw-card-1"] .hiw-art',
     staticHiw: true,
+    maskPhotoLayers: true,
   },
 };
 
@@ -65,6 +77,8 @@ type CaptureOptions = {
   isReference: boolean;
   staticHiw: boolean;
   normalizationPayload: NormalizationPayload;
+  mode: CaptureMode;
+  maskPhotoLayers: boolean;
 };
 
 type CliOptions = {
@@ -72,6 +86,14 @@ type CliOptions = {
   section?: string;
   url: string;
   selftest: boolean;
+};
+
+type DiffResult = {
+  mismatchPct: number;
+  diffPng: Buffer;
+  failed: boolean;
+  reason?: string;
+  dimensionNote?: string;
 };
 
 function parseArgs(argv: string[]): CliOptions {
@@ -129,6 +151,65 @@ async function launchBrowser(): Promise<Browser> {
   }
 }
 
+function buildAssetNormalizationCss(payload: NormalizationPayload): string {
+  const hiwRules = payload.hiwImages
+    .map(
+      (url, index) => `
+      .hiw-art-${index + 1},
+      #how .hiw-card:nth-of-type(${index + 1}) .hiw-art {
+        background-image: url('${url}') !important;
+      }`,
+    )
+    .join('');
+
+  return `
+    .hero-bg {
+      background-image: url('${payload.heroImage}') !important;
+      background-color: #101014 !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      opacity: 1 !important;
+    }
+    ${hiwRules}
+  `;
+}
+
+async function injectAssetNormalizationStylesheet(
+  page: Page,
+  payload: NormalizationPayload,
+): Promise<void> {
+  await page.addStyleTag({
+    content: buildAssetNormalizationCss(payload),
+  });
+}
+
+async function injectReferenceFonts(page: Page): Promise<void> {
+  await page.addStyleTag({ url: REFERENCE_FONTS_URL });
+  await page.addStyleTag({
+    content: `
+      :root {
+        --serif: 'STIX Two Text', 'Times New Roman', serif;
+        --sans: 'Inter', -apple-system, sans-serif;
+        --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      }
+    `,
+  });
+  await page.evaluate(() => document.fonts.ready);
+}
+
+async function normalizeAppHeroImage(
+  page: Page,
+  payload: NormalizationPayload,
+): Promise<void> {
+  await page.evaluate((heroImage) => {
+    const heroBg = document.querySelector('.hero-bg');
+    const img = heroBg?.querySelector('img');
+    if (img instanceof HTMLImageElement) {
+      img.src = heroImage;
+    }
+  }, payload.heroImage);
+}
+
 async function pinHeroBackgroundGeometry(page: Page): Promise<void> {
   await page.evaluate(() => {
     const heroBg = document.querySelector('.hero-bg') as HTMLElement | null;
@@ -147,72 +228,10 @@ async function pinHeroBackgroundGeometry(page: Page): Promise<void> {
   });
 }
 
-async function pinHiwCopyTypography(page: Page, width: number): Promise<void> {
-  const headingSize = Math.min(36, Math.max(22, width * 0.026));
-
-  await page.evaluate(({ hSize }) => {
-    document.querySelectorAll('.hiw-num').forEach((element) => {
-      const el = element as HTMLElement;
-      el.style.setProperty('font-size', '11.5px', 'important');
-      el.style.setProperty('line-height', '11.5px', 'important');
-      el.style.setProperty('margin-bottom', '20px', 'important');
-    });
-
-    document.querySelectorAll('.hiw-card h3').forEach((element) => {
-      const el = element as HTMLElement;
-      el.style.setProperty('font-size', `${hSize}px`, 'important');
-      el.style.setProperty('line-height', `${hSize * 1.08}px`, 'important');
-      el.style.setProperty('margin-bottom', '16px', 'important');
-      el.style.setProperty('white-space', 'nowrap', 'important');
-    });
-
-    document.querySelectorAll('.hiw-card p').forEach((element) => {
-      const el = element as HTMLElement;
-      el.style.setProperty('font-size', '16px', 'important');
-      el.style.setProperty('line-height', '26.4px', 'important');
-      el.style.setProperty('max-width', '440px', 'important');
-    });
-  }, { hSize: headingSize });
-}
-
-async function pinHiwArtGeometry(page: Page, width: number): Promise<void> {
-  const artHeight = width <= 760 ? 210 : 540;
-
-  await page.evaluate(({ height, isDesktop }) => {
-    document.querySelectorAll('.hiw-art').forEach((art) => {
-      const element = art as HTMLElement;
-      element.style.setProperty('height', `${height}px`, 'important');
-      element.style.setProperty('min-height', `${height}px`, 'important');
-      element.style.setProperty('max-height', `${height}px`, 'important');
-      element.style.setProperty('box-sizing', 'border-box', 'important');
-    });
-
-    if (isDesktop) {
-      document.querySelectorAll('.hiw-card').forEach((card) => {
-        const element = card as HTMLElement;
-        element.style.setProperty('box-sizing', 'border-box', 'important');
-        element.style.setProperty('height', '540px', 'important');
-        element.style.setProperty('min-height', '540px', 'important');
-        element.style.setProperty('max-height', '540px', 'important');
-      });
-    }
-  }, { height: artHeight, isDesktop: width > 760 });
-}
-
-function applyCaptureOverrides(
-  page: Page,
-  staticHiw: boolean,
-  width: number,
-): Promise<void> {
+function applyCaptureOverrides(page: Page, staticHiw: boolean): Promise<void> {
   if (!staticHiw) {
     return Promise.resolve();
   }
-
-  const artHeight = width <= 760 ? '210px' : '540px';
-  const cardRule =
-    width > 760
-      ? '.hiw-card { height: 540px !important; min-height: 540px !important; max-height: 540px !important; }'
-      : '';
 
   return page
     .addStyleTag({
@@ -221,18 +240,33 @@ function applyCaptureOverrides(
       .hiw-pin { position: static !important; height: auto !important; display: block !important; }
       .hiw-viewport { height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; }
       .hiw-stack { transform: none !important; }
-      ${cardRule}
-      .hiw-art { height: ${artHeight} !important; min-height: ${artHeight} !important; max-height: ${artHeight} !important; }
     `,
     })
     .then(() => undefined);
 }
 
-async function normalizeReferencePage(
-  page: Page,
-  payload: NormalizationPayload,
-): Promise<void> {
-  await page.evaluate((data) => {
+async function applyPhotoLayerMask(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      .hero-bg {
+        background-image: none !important;
+      }
+      .hero-bg img {
+        visibility: hidden !important;
+      }
+      .hiw-art,
+      .hiw-art-1,
+      .hiw-art-2,
+      .hiw-art-3,
+      .hiw-art-4 {
+        background-image: none !important;
+      }
+    `,
+  });
+}
+
+async function normalizeReferencePage(page: Page): Promise<void> {
+  await page.evaluate(() => {
     document.querySelectorAll('.logo').forEach((logo) => {
       const mark = logo.querySelector('.lm');
       logo.textContent = '';
@@ -254,13 +288,6 @@ async function normalizeReferencePage(
         (anchor as HTMLElement).style.display = 'none';
       }
     });
-
-    const heroBg = document.querySelector('.hero-bg') as HTMLElement | null;
-    if (heroBg) {
-      heroBg.style.backgroundImage = `url('${data.heroImage}')`;
-      heroBg.style.backgroundColor = '#101014';
-      heroBg.style.opacity = '1';
-    }
 
     const heroOdo = document.getElementById('hero-odo');
     if (heroOdo) {
@@ -349,19 +376,18 @@ async function normalizeReferencePage(
         const num = card.querySelector('.hiw-num');
         const title = card.querySelector('h3');
         const body = card.querySelector('p');
-        const art = card.querySelector('.hiw-art') as HTMLElement | null;
         if (num) {
           num.textContent = copy.num;
         }
         if (title) {
           title.textContent = copy.title;
-          (title as HTMLElement).style.whiteSpace = 'nowrap';
         }
         if (body) {
           body.textContent = copy.body;
         }
-        if (art && data.hiwImages[index]) {
-          art.style.backgroundImage = `url('${data.hiwImages[index]}')`;
+        const art = card.querySelector('.hiw-art') as HTMLElement | null;
+        if (art) {
+          art.style.backgroundImage = '';
         }
       });
     }
@@ -370,40 +396,25 @@ async function normalizeReferencePage(
     if (stack) {
       stack.style.transform = 'translateY(0)';
     }
-  }, payload);
-}
-
-async function normalizeAppCaptureAssets(
-  page: Page,
-  payload: NormalizationPayload,
-): Promise<void> {
-  await page.evaluate((data) => {
-    const heroBg = document.querySelector('.hero-bg') as HTMLElement | null;
-    if (heroBg) {
-      heroBg.style.backgroundImage = `url('${data.heroImage}')`;
-      heroBg.style.backgroundColor = '#101014';
-    }
-
-    document.querySelectorAll('.hiw-art').forEach((art, index) => {
-      const imageUrl = data.hiwImages[index];
-      if (imageUrl) {
-        (art as HTMLElement).style.backgroundImage = `url('${imageUrl}')`;
-      }
-    });
-  }, payload);
+  });
 }
 
 async function freezePageForCapture(
   page: Page,
   options: CaptureOptions,
-  width: number,
 ): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
 
   if (options.isReference) {
-    await normalizeReferencePage(page, options.normalizationPayload);
+    await normalizeReferencePage(page);
   } else {
-    await normalizeAppCaptureAssets(page, options.normalizationPayload);
+    await injectReferenceFonts(page);
+  }
+
+  await injectAssetNormalizationStylesheet(page, options.normalizationPayload);
+
+  if (!options.isReference) {
+    await normalizeAppHeroImage(page, options.normalizationPayload);
   }
 
   await page.evaluate(() => {
@@ -414,16 +425,18 @@ async function freezePageForCapture(
     const style = document.createElement('style');
     style.setAttribute('data-visual-diff', 'freeze');
     style.textContent =
-      '*,*::before,*::after{transition:none!important;animation:none!important}.glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.hiw-card{box-shadow:none!important}.hero-bg img{display:none!important}';
+      '*,*::before,*::after{transition:none!important;animation:none!important}';
     document.head.appendChild(style);
   });
 
   await pinHeroBackgroundGeometry(page);
 
   if (options.staticHiw) {
-    await applyCaptureOverrides(page, true, width);
-    await pinHiwArtGeometry(page, width);
-    await pinHiwCopyTypography(page, width);
+    await applyCaptureOverrides(page, true);
+  }
+
+  if (options.mode === 'structure' && options.maskPhotoLayers) {
+    await applyPhotoLayerMask(page);
   }
 }
 
@@ -437,7 +450,7 @@ async function captureSectionScreenshot(
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width, height: 1200 });
   await page.goto(targetUrl, { waitUntil: 'load' });
-  await freezePageForCapture(page, options, width);
+  await freezePageForCapture(page, options);
 
   const element = page.locator(selector).first();
   await element.waitFor({ state: 'visible' });
@@ -458,10 +471,7 @@ function cropPngToSize(source: PNG, width: number, height: number): PNG {
   return cropped;
 }
 
-function diffImages(
-  left: Buffer,
-  right: Buffer,
-): { mismatchPct: number; diffPng: Buffer; failed: boolean; reason?: string } {
+function diffImages(left: Buffer, right: Buffer): DiffResult {
   const imgLeft = PNG.sync.read(left);
   const imgRight = PNG.sync.read(right);
 
@@ -479,6 +489,10 @@ function diffImages(
 
   const width = Math.min(imgLeft.width, imgRight.width);
   const height = Math.min(imgLeft.height, imgRight.height);
+  const dimensionNote =
+    widthDiff > 0 || heightDiff > 0
+      ? `${imgLeft.width}x${imgLeft.height} vs ${imgRight.width}x${imgRight.height}`
+      : undefined;
   const croppedLeft =
     imgLeft.width === width && imgLeft.height === height
       ? imgLeft
@@ -503,6 +517,7 @@ function diffImages(
     mismatchPct,
     diffPng: PNG.sync.write(diff),
     failed: false,
+    dimensionNote,
   };
 }
 
@@ -517,7 +532,7 @@ function writeArtifact(
   suffix: string,
   data: Buffer,
 ): string {
-  const filePath = path.join(outputDir, `${sectionId}-${width}${PIXEL_UNIT}-${suffix}.png`);
+  const filePath = path.join(outputDir, `${sectionId}-${width}px-${suffix}.png`);
   fs.writeFileSync(filePath, data);
   return filePath;
 }
@@ -540,13 +555,14 @@ async function runPairDiff(options: {
   writeArtifact(outputDir, sectionId, width, 'diff', result.diffPng);
 
   if (result.failed) {
-    const line = `${sectionId} @ ${width}${PIXEL_UNIT} — FAIL (${result.reason})`;
+    const line = `${sectionId} @ ${width}px — FAIL (${result.reason})`;
     scores.push(line);
     console.error(line);
     return 100;
   }
 
-  const line = `${sectionId} @ ${width}${PIXEL_UNIT} — ${result.mismatchPct.toFixed(2)}%`;
+  const dimensionSuffix = result.dimensionNote ? ` (${result.dimensionNote})` : '';
+  const line = `${sectionId} @ ${width}px — ${result.mismatchPct.toFixed(2)}%${dimensionSuffix}`;
   scores.push(line);
   console.log(line);
   return result.mismatchPct;
@@ -567,6 +583,91 @@ async function captureOnFreshPage(
   }
 }
 
+function buildCaptureOptions(
+  section: SectionConfig,
+  mode: CaptureMode,
+  isReference: boolean,
+  normalizationPayload: NormalizationPayload,
+): CaptureOptions {
+  return {
+    isReference,
+    staticHiw: section.staticHiw ?? false,
+    normalizationPayload,
+    mode,
+    maskPhotoLayers: section.maskPhotoLayers ?? false,
+  };
+}
+
+async function runSectionDiffs(options: {
+  browser: Browser;
+  outputDir: string;
+  section: SectionConfig;
+  appUrl: string;
+  normalizationPayload: NormalizationPayload;
+  scores: string[];
+}): Promise<boolean> {
+  const { browser, outputDir, section, appUrl, normalizationPayload, scores } =
+    options;
+  let failed = false;
+
+  const captures: Array<{
+    sectionId: string;
+    selector: string;
+    appSelector: string;
+    mode: CaptureMode;
+  }> = [
+    {
+      sectionId: section.id,
+      selector: section.selector,
+      appSelector: section.appSelector ?? section.selector,
+      mode: 'structure',
+    },
+  ];
+
+  if (section.artSelector) {
+    captures.push({
+      sectionId: `${section.id}-art`,
+      selector: section.artSelector,
+      appSelector: section.appArtSelector ?? section.artSelector,
+      mode: 'art',
+    });
+  }
+
+  for (const capture of captures) {
+    for (const width of VIEWPORTS) {
+      const referenceBuffer = await captureOnFreshPage(
+        browser,
+        REFERENCE_URL,
+        width,
+        capture.selector,
+        buildCaptureOptions(section, capture.mode, true, normalizationPayload),
+      );
+      const appBuffer = await captureOnFreshPage(
+        browser,
+        appUrl,
+        width,
+        capture.appSelector,
+        buildCaptureOptions(section, capture.mode, false, normalizationPayload),
+      );
+
+      const mismatchPct = await runPairDiff({
+        outputDir,
+        sectionId: capture.sectionId,
+        width,
+        referenceBuffer,
+        appBuffer,
+        scores,
+      });
+
+      if (mismatchPct > GATE_MAX_MISMATCH_PCT) {
+        failed = true;
+      }
+    }
+  }
+
+  return failed;
+}
+
 async function runSelftest(sprint: number, appUrl: string): Promise<void> {
   const outputDir = path.join(ROOT, 'qa-screenshots', `sprint-${sprint}`);
   ensureDir(outputDir);
@@ -578,27 +679,27 @@ async function runSelftest(sprint: number, appUrl: string): Promise<void> {
 
   try {
     for (const width of VIEWPORTS) {
+      const captureOptions: CaptureOptions = {
+        isReference: true,
+        staticHiw: false,
+        normalizationPayload,
+        mode: 'structure',
+        maskPhotoLayers: false,
+      };
+
       const firstCapture = await captureOnFreshPage(
         browser,
         REFERENCE_URL,
         width,
         '#transparency',
-        {
-          isReference: true,
-          staticHiw: false,
-          normalizationPayload,
-        },
+        captureOptions,
       );
       const secondCapture = await captureOnFreshPage(
         browser,
         REFERENCE_URL,
         width,
         '#transparency',
-        {
-          isReference: true,
-          staticHiw: false,
-          normalizationPayload,
-        },
+        captureOptions,
       );
 
       const mismatchPct = await runPairDiff({
@@ -613,7 +714,7 @@ async function runSelftest(sprint: number, appUrl: string): Promise<void> {
       if (mismatchPct > SELFTEST_MAX_MISMATCH_PCT) {
         failed = true;
         console.error(
-          `Selftest exceeded ${SELFTEST_MAX_MISMATCH_PCT.toFixed(2)}% at ${width}${PIXEL_UNIT}`,
+          `Selftest exceeded ${SELFTEST_MAX_MISMATCH_PCT.toFixed(2)}% at ${width}px`,
         );
       }
     }
@@ -650,44 +751,16 @@ async function runVisualDiff(options: CliOptions): Promise<void> {
 
   try {
     for (const section of sectionEntries) {
-      const appSelector = section.appSelector ?? section.selector;
-
-      for (const width of VIEWPORTS) {
-        const referenceBuffer = await captureOnFreshPage(
-          browser,
-          REFERENCE_URL,
-          width,
-          section.selector,
-          {
-            isReference: true,
-            staticHiw: section.staticHiw ?? false,
-            normalizationPayload,
-          },
-        );
-        const appBuffer = await captureOnFreshPage(
-          browser,
-          options.url,
-          width,
-          appSelector,
-          {
-            isReference: false,
-            staticHiw: section.staticHiw ?? false,
-            normalizationPayload,
-          },
-        );
-
-        const mismatchPct = await runPairDiff({
-          outputDir,
-          sectionId: section.id,
-          width,
-          referenceBuffer,
-          appBuffer,
-          scores,
-        });
-
-        if (mismatchPct > GATE_MAX_MISMATCH_PCT) {
-          failed = true;
-        }
+      const sectionFailed = await runSectionDiffs({
+        browser,
+        outputDir,
+        section,
+        appUrl: options.url,
+        normalizationPayload,
+        scores,
+      });
+      if (sectionFailed) {
+        failed = true;
       }
     }
   } finally {

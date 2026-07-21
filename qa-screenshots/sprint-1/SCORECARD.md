@@ -1,4 +1,4 @@
-# Sprint 1 self-QA scorecard (partial — not 10/10)
+# Sprint 1 self-QA scorecard (partial — REJECT fix pass)
 
 Branch: `feat/landing-sprint-1-hero-nav-proof-how`  
 Production diff target: `npm run build && npm run start -- -p 3000`  
@@ -6,37 +6,45 @@ Harness: `npm run visual-diff -- --sprint 1 --url http://localhost:3000`
 
 ## Visual diff (gate 1)
 
-| Section   | 360px | 560px | 900px | 1180px |
-|-----------|-------|-------|-------|--------|
-| nav       | 0.00% ✅ | 0.00% ✅ | 0.00% ✅ | 0.00% ✅ |
-| hero      | 12.10% ❌ | 7.95% ❌ | 2.11% ❌ | 1.12% ✅ |
-| proof     | 0.81% ✅ | 0.81% ✅ | 0.50% ✅ | 0.78% ✅ |
-| hiw-card  | 0.10% ✅ | 24.43% ❌ | 19.77% ❌ | 20.36% ❌ |
+| Section        | 360px | 560px | 900px | 1180px |
+|----------------|-------|-------|-------|--------|
+| nav            | 0.00% ✅ | 0.00% ✅ | 0.00% ✅ | 0.00% ✅ |
+| hero           | 3.67% ❌ | 2.75% ❌ | 2.01% ❌ | 0.95% ✅ |
+| hero-art       | 3.12% ❌ | 2.46% ❌ | 1.65% ✅ | 0.89% ✅ |
+| proof          | 0.20% ✅ | 0.31% ✅ | 0.19% ✅ | 0.30% ✅ |
+| hiw-card       | 0.00% ✅ (304×422 vs 304×423) | 23.66% ❌ (504×397 vs 504×396) | 19.65% ❌ | 20.17% ❌ |
+| hiw-card-art   | 0.00% ✅ | 42.65% ❌ | 37.85% ❌ | 39.02% ❌ |
 
-Root cause (investigated):
-- **hiw-card @ 560+**: `.hiw-art` backgrounds match at 0.00% when isolated; full-card mismatch is overwhelmingly in `.hiw-copy` (Inter/next/font vs reference Google Fonts metrics) and at desktop widths a 540px vs 541px art column height shifts `background-size: cover` crop.
-- **hero @ 360/560**: hero-bg pixel crop differs between reference (CSS bg) and app (CSS bg + hidden next/image layer) across the large min-height viewport; desktop widths pass.
+Dimension tolerance notes are printed inline when ±1px cropping applies (see `scores.txt`).
+
+### REJECT fix pass — verified
+
+- `.hiw-card h3`: `overflow-wrap: break-word`; `white-space: nowrap` removed (app + harness mirrors deleted).
+- Hero: single visible layer (`next/image` only); CSS bg + opacity hack removed; `unoptimized` dropped.
+- How-it-works: hidden sr-only images removed; `staticLayout` hydration flip removed; `.hiw-static` moved to `prefers-reduced-motion` only; art via `.hiw-art-N` classes.
+- Harness: typography/geometry pinning removed; photo layers masked for structure diffs; separate `-art` captures; app-side Google Fonts injection; glass/shadow capture disables removed; `px` score lines with dimension suffixes; asset normalization via stylesheet.
+
+### Still open
+
+- **hero @ 360–900**: structure diff ~2–3.7% — residual layout/type variance with masked photos; art layer ~2–3% at smaller widths (CSS `background-image` ref vs `next/image` app rasterization).
+- **hiw-card @ 560+**: structure ~20–24% — desktop card typography/layout + restored `backdrop-filter` / `box-shadow` in diff.
+- **hiw-card-art @ 560+**: ~38–43% despite identical normalized asset URLs and matching element box (502×211); likely `background-size: cover` crop / subpixel mismatch on desktop static-layout override — needs follow-up isolation.
+- **Horizontal scroll @ 360px**: `document.scrollingElement.scrollWidth === 360` **fails** (app 475px, reference 400px). `#how h3` no longer overflows; offender is `.stats-grid` / `.stat` column sizing (pre-existing sprint-1 proof strip layout, not hiw).
 
 ## Other gates
 
 | Gate | Status | Notes |
 |------|--------|-------|
-| 2 Token compliance | ✅ | `grep` clean on `components/`, `app/*.tsx`, `app/tokens/` |
+| 2 Token compliance | ✅ | `--ink-on-image-*` tokens added; repeated rgba literals promoted |
 | 3 Theme integrity | ⚠️ | Not manually re-verified this cycle |
-| 4 Color & type | ✅ | Reference wins applied (mono stat `.v`, sans uppercase `.hiw-card h3`, serif hero `em`) |
-| 5 Responsive | ⚠️ | No horizontal scroll observed; mid-width hiw/hero diffs remain |
-| 6 A11y | ⚠️ | Landmarks + one h1 + reduced-motion paths implemented; Lighthouse not run |
-| 7 Next.js | ✅ | Exactly 3 `"use client"` files; `next/image` + hero `priority` only |
+| 4 Color & type | ✅ | App capture injects reference Google Fonts; gate 4 still auditable via computed styles |
+| 5 Responsive | ❌ | Horizontal scroll at 360px (proof strip); mid-width hero/hiw diffs remain |
+| 6 A11y | ⚠️ | Landmarks + one h1 + reduced-motion paths; Lighthouse not run |
+| 7 Next.js | ✅ | 3 client components; decorative hiw art is CSS-only (no hidden next/image) |
 | 8 Performance | ⚠️ | `npm run build` clean; Lighthouse not run |
 | 9 Architecture | ✅ | UI primitives in `components/ui/`; CVA + typed props |
-| 10 Hygiene | ✅ | lint + typecheck pass; PENDING markers use exact format |
+| 10 Hygiene | ✅ | lint + typecheck pass; PENDING markers on STEPS/comments |
 
 ## Out of scope (not built)
 
 Pricing, transparency, comparison, footer, ticker, venue strip, brand film, markets, developers, FAQ, join, final CTA, hamburger nav.
-
-## Recommended next steps
-
-1. Align capture fonts: inject reference Google Fonts stylesheet on app during visual-diff freeze **or** serve reference HTML from the same origin as the app.
-2. Pin `.hiw-art` height to exactly 540px (desktop) / 210px (mobile) via inline styles on **both** ref and app before screenshot (verify computed height in harness).
-3. Hero mobile: use CSS-only hero background during capture (already partially done); consider identical hero-bg geometry pin on both sides.

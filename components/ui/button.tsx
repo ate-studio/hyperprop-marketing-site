@@ -10,14 +10,9 @@ const buttonVariants = cva('btn', {
       primary: 'btn-primary',
       ghost: 'btn-ghost',
     },
-    size: {
-      default: '',
-      nav: '',
-    },
   },
   defaultVariants: {
     variant: 'primary',
-    size: 'default',
   },
 });
 
@@ -43,12 +38,11 @@ export type ButtonProps = SharedButtonProps &
 export function Button({
   className,
   variant,
-  size,
   href,
   children,
   ...props
 }: ButtonProps) {
-  const classes = cn(buttonVariants({ variant, size }), className);
+  const classes = cn(buttonVariants({ variant }), className);
 
   if (href !== undefined) {
     const linkProps = props as Omit<

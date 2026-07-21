@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Wrap } from '@/components/ui/wrap';
@@ -13,16 +12,16 @@ const STEPS = [
   {
     id: '1',
     theme: 'hw1',
-    image: '/images/hiw-01.jpg',
+    artClass: 'hiw-art-1',
     num: '01 — Today',
     title: 'Start a challenge',
     body: 'Pick a challenge from $5K to $100K. One-time fee. No time limit.',
-    pending: 'confirm tiers',
+    // PENDING: confirm with CTO — confirm tiers
   },
   {
     id: '2',
     theme: 'hw2',
-    image: '/images/hiw-02.jpg',
+    artClass: 'hiw-art-2',
     num: '02 — Your pace',
     title: 'Prove your edge',
     body: "Hit the profit target inside two limits: max daily loss and max drawdown. That's the entire rule set.",
@@ -30,7 +29,7 @@ const STEPS = [
   {
     id: '3',
     theme: 'hw3',
-    image: '/images/hiw-03.jpg',
+    artClass: 'hiw-art-3',
     num: '03 — Instant upgrade',
     title: 'Get funded',
     body: 'Hit the target and the account funds itself — no forms, no review queue. Trade the funded account the same day.',
@@ -38,18 +37,17 @@ const STEPS = [
   {
     id: '4',
     theme: 'hw4',
-    image: '/images/hiw-04.jpg',
+    artClass: 'hiw-art-4',
     num: '04 — On demand, on-chain',
     title: 'Get paid in USDC',
     body: 'Keep the majority of your gains. Payouts settle on-chain with a public transaction hash — verify every single one.',
-    pending: 'confirm split % before naming a number',
+    // PENDING: confirm with CTO — confirm split % before naming a number
   },
 ] as const;
 
 export function HowItWorks() {
   const trackRef = useRef<HTMLDivElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
-  const [staticLayout, setStaticLayout] = useState(true);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -61,11 +59,7 @@ export function HowItWorks() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     const applyLayout = () => {
-      const shouldStatic =
-        reducedMotion.matches || window.innerWidth <= MOBILE_BREAKPOINT;
-      setStaticLayout(shouldStatic);
-
-      if (shouldStatic) {
+      if (reducedMotion.matches || window.innerWidth <= MOBILE_BREAKPOINT) {
         stack.style.transform = '';
         return;
       }
@@ -109,22 +103,7 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section
-      id="how"
-      className={cn('band overflow-visible py-section-y', staticLayout && 'hiw-static')}
-    >
-      <div className="sr-only" aria-hidden="true">
-        {STEPS.map((step) => (
-          <Image
-            key={step.id}
-            src={step.image}
-            alt=""
-            width={640}
-            height={540}
-            unoptimized
-          />
-        ))}
-      </div>
+    <section id="how" className="band overflow-visible py-section-y">
       <div ref={trackRef} className="hiw-track">
         <div className="hiw-pin">
           <Wrap className="w-full">
@@ -139,24 +118,15 @@ export function HowItWorks() {
                     key={step.id}
                     data-qa={index === 0 ? 'hiw-card-1' : undefined}
                     className={cn('hiw-card', step.theme)}
-                    style={{ ['--i' as string]: index }}
                   >
                     <div className="hiw-copy">
                       <span className="hiw-num">{step.num}</span>
                       <h3>{step.title}</h3>
-                      <p>
-                        {step.body}
-                        {'pending' in step && step.pending ? (
-                          <>
-                            {/* PENDING: confirm with CTO — {step.pending} */}
-                          </>
-                        ) : null}
-                      </p>
+                      <p>{step.body}</p>
                     </div>
                     <div
                       aria-hidden="true"
-                      className="hiw-art"
-                      style={{ backgroundImage: `url('${step.image}')` }}
+                      className={cn('hiw-art', step.artClass)}
                     />
                   </article>
                 ))}

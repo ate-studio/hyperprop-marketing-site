@@ -55,10 +55,10 @@ export function Nav() {
         </div>
         <div className="nav-cta">
           {/* PENDING: confirm with CTO — sign-in destination */}
-          <Button href="#" variant="ghost" size="nav">
+          <Button href="#" variant="ghost">
             Sign in
           </Button>
-          <Button href="#pricing" variant="primary" size="nav">
+          <Button href="#pricing" variant="primary">
             Start a challenge
           </Button>
         </div>

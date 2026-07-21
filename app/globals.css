@@ -20,6 +20,9 @@
   --hero-bg-tone: #101014;
   --glass: rgba(22, 23, 27, 0.52);
   --glass-line: rgba(246, 245, 241, 0.13);
+  --ink-on-image-82: rgba(246, 245, 241, 0.82);
+  --ink-on-image-75: rgba(246, 245, 241, 0.75);
+  --ink-on-image-70: rgba(246, 245, 241, 0.7);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 34px -14px rgba(0, 0, 0, 0.6);
   --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.5), 0 28px 60px -18px rgba(0, 0, 0, 0.75);
   --serif: var(--font-stix), 'Times New Roman', serif;
@@ -155,6 +158,10 @@
 }
 
 @layer components {
+  main section {
+    border-top: 1px solid var(--line);
+  }
+
   .btn {
     display: inline-flex;
     align-items: center;
@@ -407,11 +414,11 @@
   }
 
   .hero-eyebrow-muted {
-    color: rgba(246, 245, 241, 0.75);
+    color: var(--ink-on-image-75);
   }
 
   .hero-eyebrow-dim {
-    color: rgba(246, 245, 241, 0.7);
+    color: var(--ink-on-image-70);
   }
 
   .hero-card-eyebrow {
@@ -425,7 +432,7 @@
   .hero-sub {
     max-width: 480px;
     font-size: var(--text-md);
-    color: rgba(246, 245, 241, 0.82);
+    color: var(--ink-on-image-82);
     margin: 18px 0 26px;
     text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
   }
@@ -455,20 +462,7 @@
     inset: -12% 0;
     opacity: 1;
     background-color: var(--hero-bg-tone);
-    background-image: url('/images/hero-markets.png');
-    background-size: cover;
-    background-position: center;
     will-change: transform;
-  }
-
-  .hero-bg img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    opacity: 0.001;
   }
 
   .hc-line .up {
@@ -477,7 +471,7 @@
 
   .hc-cap {
     font-size: var(--text-sm);
-    color: rgba(246, 245, 241, 0.75);
+    color: var(--ink-on-image-75);
     margin-top: 10px;
     line-height: 1.55;
   }
@@ -656,8 +650,7 @@
     letter-spacing: -0.015em;
     text-transform: uppercase;
     margin-bottom: 16px;
-    overflow-wrap: normal;
-    white-space: nowrap;
+    overflow-wrap: break-word;
   }
 
   .hiw-card p {
@@ -670,6 +663,22 @@
     background-size: cover;
     background-position: center;
     min-height: 100%;
+  }
+
+  .hiw-art-1 {
+    background-image: url('/images/hiw-01.jpg');
+  }
+
+  .hiw-art-2 {
+    background-image: url('/images/hiw-02.jpg');
+  }
+
+  .hiw-art-3 {
+    background-image: url('/images/hiw-03.jpg');
+  }
+
+  .hiw-art-4 {
+    background-image: url('/images/hiw-04.jpg');
   }
 
   .hiw-theme-1,
@@ -710,24 +719,27 @@
     color: rgba(255, 255, 255, 0.78);
   }
 
-  .hiw-static .hiw-track {
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-track {
     height: auto;
   }
 
-  .hiw-static .hiw-pin {
+  .hiw-pin {
     position: static;
     height: auto;
     display: block;
   }
 
-  .hiw-static .hiw-viewport {
+  .hiw-viewport {
     height: auto;
     min-height: 0;
     max-height: none;
     overflow: visible;
   }
 
-  .hiw-static .hiw-stack {
+  .hiw-stack {
     transform: none !important;
   }
 }
@@ -761,6 +773,12 @@
 
   .hero-bottom {
     grid-template-columns: 1.25fr 0.75fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 64px 0 56px;
   }
 }
 
