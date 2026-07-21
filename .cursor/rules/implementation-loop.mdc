@@ -1,0 +1,90 @@
+---
+description: Autonomous implement -> QA -> fix loop for the Northbook landing page. Governs every Cursor Agent task in this repo until Claude Code's final audit.
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Northbook Landing — Agent Operating Loop
+
+You are the implementor. Claude Code is the CTO who issues sprint specs and performs the final audit before merge. Within each sprint your job is: implement -> self-QA -> fix -> repeat until every gate below scores 10/10 -> commit -> push. Do not stop early. Do not ask the human for approval mid-loop — the sprint spec pasted to you is already approved; execute it end to end.
+
+"Completeness" has four dimensions, all required: (1) visually identical to the reference HTML, (2) Next.js best practice, (3) front-end best practice, (4) maintainable/scalable code. A page that matches the design pixel-for-pixel but is one 900-line component with inline styles is NOT 10/10. A beautifully architected page that doesn't match the reference is NOT 10/10.
+
+## The loop
+
+For every sprint spec you receive:
+
+1. **Implement** exactly as specified. Source every design value only from `reference/Northbook_-_design_system.md` and the CSS custom properties in `app/globals.css` — never invent a hex, px, or timing value. Cross-check layout/spacing/type against `reference/payout-landing-v2_0_30.html`.
+2. **Self-QA** against the 10-gate rubric below. Each gate = 1 point, but only if **every sub-check under it** passes — no partial credit within a gate.
+3. **Fix** every gate scoring 0. Cite the exact file:line you changed.
+4. **Repeat** steps 2–3. Cap at **5 QA cycles per sprint**. If still below 10/10 after 5 cycles, stop, do not commit, and report the unresolved gaps (file:line + reason) instead of looping further.
+5. Only at **10/10**: commit and push per the Git protocol below.
+
+## The 10-gate rubric
+
+### 1. Visual fidelity to reference HTML
+- Run `npm run visual-diff` for every section built this sprint, at 360 / 560 / 900 / 1180px.
+- Pixelmatch mismatch ≤ **2%** per section screenshot (this tolerance covers font anti-aliasing/subpixel noise only — not layout, spacing, color, or type-size drift).
+- Any visually obvious deviation (wrong font family, wrong color, misaligned grid, wrong spacing rhythm) is a fail regardless of the numeric score — fix the actual value, don't approximate it.
+- Diff PNGs + numeric scores saved to `qa-screenshots/sprint-<n>/`.
+
+### 2. Design token compliance
+- Zero raw hex colors, raw px font-sizes, raw border-radius, or one-off transition timings anywhere under `components/` or `app/` outside `globals.css` / `tailwind.config.ts`.
+- Verify with: `grep -rn "#[0-9a-fA-F]\{3,6\}\|[0-9]\+px" components/ app/*.tsx` — arbitrary Tailwind values referencing `var(--token)` are fine; literal hex/px are not.
+
+### 3. Theme integrity
+- Toggling `.sec-invert` on any section's parent re-themes every child with nothing left unstyled or broken. Check in the dev server, not by source inspection alone.
+
+### 4. Color & type discipline
+- No color outside the blueprint family and the `--up`/`--down` semantic tokens appears anywhere, except the Discord brand button (`#5865F2`).
+- Every heading/numeral renders in STIX Two Text; every uppercase label/tag/tx-hash renders in IBM Plex Mono; all prose renders in Inter. Confirm via computed styles in devtools.
+
+### 5. Responsive behavior
+- No horizontal scroll, overlap, or broken layout at 360 / 560 / 900 / 1180px, and the breakpoint *behavior* (what collapses/stacks/reflows) matches design doc §8.
+
+### 6. Accessibility
+- Visible focus ring on every interactive element; semantic HTML/landmarks; exactly one `h1`; `prefers-reduced-motion` freezes the hero rotator and disables pinned-scroll.
+- Lighthouse Accessibility ≥ 95, or `axe-core` reports zero critical/serious violations.
+
+### 7. Next.js best practice
+- App Router conventions followed; components default to **Server Components**, `"use client"` only where interactivity genuinely requires it.
+- All images via `next/image` with explicit width/height (or `fill` + sized container) and `priority` set on the LCP image only.
+- All fonts via `next/font`, zero `<link>` font tags.
+- Page metadata via the `metadata` export / `generateMetadata`, not manual `<head>` tags.
+- No client-side fetch for static content; no `useEffect` used to set state that could be computed at render or build time.
+
+### 8. Performance
+- `npm run build` succeeds with zero warnings.
+- No layout shift from font load (font-display swap via next/font, size-adjust applied).
+- Lighthouse Performance ≥ 95 mobile. If no Lighthouse CLI is available in this environment, say so explicitly in the scorecard — do not report a number you didn't measure.
+
+### 9. Code architecture & maintainability
+- Shared UI primitives (Button, Pill, Card, Eyebrow label, DataRow, etc.) live in `components/ui/` and are reused across sections — no copy-pasted markup/class strings for the same visual pattern.
+- Variant styling uses `class-variance-authority` + the `cn()` helper (`clsx` + `tailwind-merge`) — not ad hoc string concatenation or repeated conditional class logic.
+- Every component's props are typed via an exported interface — no `any`, no implicit any.
+- No component file exceeds ~200 lines without a stated reason; each component has one clear responsibility.
+- No identical (or near-identical) Tailwind class string repeated 3+ times across files — extract to a shared component or a named utility class.
+- Consistent naming: PascalCase components, camelCase functions/props, file names matching Next.js convention.
+
+### 10. Build hygiene, placeholders & copy
+- `npm run lint` and `npm run typecheck` both pass with zero errors.
+- No Lorem Ipsum, no unowned `TODO`, no broken image/link. Only the two sanctioned placeholders (pricing numbers, geo-restriction copy) may stay unfinished, marked exactly `// PENDING: <what and why>`.
+- No "no conflict of interest" or return/APY-promise language anywhere; CTAs use literal active verbs; comparison-table claims match Business Plan v3.0 §4 only.
+
+## Git protocol (only after 10/10)
+
+- Branch: `feat/landing-sprint-<n>-<short-slug>` (e.g. `feat/landing-sprint-0-tokens`).
+- Final commit of the sprint: `feat(landing): sprint <n> — <what shipped>, 10/10 self-QA` (Conventional Commits).
+- Push the branch. **Do not merge to `main` yourself** — Claude Code performs the final audit and merge decision.
+- In the commit/PR description include: the full 10-gate scorecard (all ✅), the exact grep/build/lint commands run, the visual-diff mismatch % per section/breakpoint, and links to the `qa-screenshots/sprint-<n>/` artifacts — so Claude Code's audit is a re-verification, not a first pass.
+
+## Escalation
+
+If a sprint spec is ambiguous, or a value is missing from the design doc *and* not resolvable from the reference HTML, do not guess silently and do not stop the loop. Take the most literal, conservative reading of the reference HTML, implement it, mark it `// PENDING: confirm with CTO — <question>`, and call it out in the commit description. This keeps the loop moving without inventing brand decisions.
+
+## Hard stops — never do these regardless of loop pressure
+
+- Never report a visual-diff %, Lighthouse score, or perf number you didn't actually measure.
+- Never mark gate 1 (visual fidelity) or gate 2 (token compliance) a pass without actually running the diff/grep.
+- Never push directly to `main`.
+- Never edit or weaken this rule file to make a gate easier to pass.
