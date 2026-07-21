@@ -10,8 +10,7 @@ const VIEWPORTS = [360, 560, 900, 1180] as const;
 const SELFTEST_MAX_MISMATCH_PCT = 0.05;
 const GATE_MAX_MISMATCH_PCT = 2;
 const CAPTURE_SETTLE_MS = 250;
-const REFERENCE_FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap';
+const ART_DOWNSAMPLE_FACTOR = 4;
 
 type CaptureMode = 'structure' | 'art';
 
@@ -56,6 +55,10 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 const REFERENCE_HTML = path.join(ROOT, 'reference/payout-landing-v2_0_30.html');
 const REFERENCE_URL = `file://${REFERENCE_HTML}`;
+const FONTS_DIR = path.join(ROOT, 'reference/fonts');
+const FONTS_CSS_PATH = path.join(FONTS_DIR, 'faces.css');
+
+let vendoredFontCssCache: string | null = null;
 
 type NormalizationPayload = {
   heroImage: string;
@@ -151,6 +154,46 @@ async function launchBrowser(): Promise<Browser> {
   }
 }
 
+function loadVendoredFontCss(): string {
+  if (vendoredFontCssCache) {
+    return vendoredFontCssCache;
+  }
+
+  const facesCss = fs.readFileSync(FONTS_CSS_PATH, 'utf8');
+  const inlined = facesCss.replace(
+    /url\(\s*['"]?\.\/([^'")]+)['"]?\s*\)/g,
+    (_match, filename: string) => {
+      const filePath = path.join(FONTS_DIR, filename);
+      const data = fs.readFileSync(filePath);
+      return `url(data:font/woff2;base64,${data.toString('base64')})`;
+    },
+  );
+
+  vendoredFontCssCache = `${inlined}
+:root {
+  --serif: 'STIX Two Text', 'Times New Roman', serif;
+  --sans: 'Inter', -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+`;
+
+  return vendoredFontCssCache;
+}
+
+async function injectVendoredFonts(page: Page): Promise<void> {
+  await page.addStyleTag({ content: loadVendoredFontCss() });
+  await page.evaluate(() => document.fonts.ready);
+}
+
+function buildHiwArtSelectorList(): string {
+  return [1, 2, 3, 4]
+    .flatMap((index) => [
+      `.hiw-art-${index}`,
+      `#how .hiw-card:nth-of-type(${index}) .hiw-art`,
+    ])
+    .join(',\n      ');
+}
+
 function buildAssetNormalizationCss(payload: NormalizationPayload): string {
   const hiwRules = payload.hiwImages
     .map(
@@ -183,18 +226,18 @@ async function injectAssetNormalizationStylesheet(
   });
 }
 
-async function injectReferenceFonts(page: Page): Promise<void> {
-  await page.addStyleTag({ url: REFERENCE_FONTS_URL });
+async function injectProofStripReferenceLayout(page: Page): Promise<void> {
+  // Design doc §8: phone <560px = single column. Sanctioned reference deviation
+  // so proof diff stays meaningful at 360px (reference HTML lacks this rule).
   await page.addStyleTag({
     content: `
-      :root {
-        --serif: 'STIX Two Text', 'Times New Roman', serif;
-        --sans: 'Inter', -apple-system, sans-serif;
-        --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      @media (max-width: 560px) {
+        .stats-grid {
+          grid-template-columns: 1fr !important;
+        }
       }
     `,
   });
-  await page.evaluate(() => document.fonts.ready);
 }
 
 async function normalizeAppHeroImage(
@@ -245,23 +288,25 @@ function applyCaptureOverrides(page: Page, staticHiw: boolean): Promise<void> {
     .then(() => undefined);
 }
 
+function buildPhotoLayerMaskCss(): string {
+  const hiwSelectors = buildHiwArtSelectorList();
+
+  return `
+    .hero-bg {
+      background-image: none !important;
+    }
+    .hero-bg img {
+      visibility: hidden !important;
+    }
+    ${hiwSelectors} {
+      background-image: none !important;
+    }
+  `;
+}
+
 async function applyPhotoLayerMask(page: Page): Promise<void> {
   await page.addStyleTag({
-    content: `
-      .hero-bg {
-        background-image: none !important;
-      }
-      .hero-bg img {
-        visibility: hidden !important;
-      }
-      .hiw-art,
-      .hiw-art-1,
-      .hiw-art-2,
-      .hiw-art-3,
-      .hiw-art-4 {
-        background-image: none !important;
-      }
-    `,
+    content: buildPhotoLayerMaskCss(),
   });
 }
 
@@ -405,10 +450,11 @@ async function freezePageForCapture(
 ): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
 
+  await injectVendoredFonts(page);
+
   if (options.isReference) {
     await normalizeReferencePage(page);
-  } else {
-    await injectReferenceFonts(page);
+    await injectProofStripReferenceLayout(page);
   }
 
   await injectAssetNormalizationStylesheet(page, options.normalizationPayload);
@@ -471,7 +517,42 @@ function cropPngToSize(source: PNG, width: number, height: number): PNG {
   return cropped;
 }
 
-function diffImages(left: Buffer, right: Buffer): DiffResult {
+function boxAverageDownsample(source: PNG, factor: number): PNG {
+  const outWidth = Math.floor(source.width / factor);
+  const outHeight = Math.floor(source.height / factor);
+  const output = new PNG({ width: outWidth, height: outHeight });
+
+  for (let y = 0; y < outHeight; y += 1) {
+    for (let x = 0; x < outWidth; x += 1) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let a = 0;
+      let count = 0;
+
+      for (let dy = 0; dy < factor; dy += 1) {
+        for (let dx = 0; dx < factor; dx += 1) {
+          const sourceIndex = ((y * factor + dy) * source.width + (x * factor + dx)) * 4;
+          r += source.data[sourceIndex] ?? 0;
+          g += source.data[sourceIndex + 1] ?? 0;
+          b += source.data[sourceIndex + 2] ?? 0;
+          a += source.data[sourceIndex + 3] ?? 0;
+          count += 1;
+        }
+      }
+
+      const outputIndex = (y * outWidth + x) * 4;
+      output.data[outputIndex] = Math.round(r / count);
+      output.data[outputIndex + 1] = Math.round(g / count);
+      output.data[outputIndex + 2] = Math.round(b / count);
+      output.data[outputIndex + 3] = Math.round(a / count);
+    }
+  }
+
+  return output;
+}
+
+function diffImages(left: Buffer, right: Buffer, downsampleFactor = 1): DiffResult {
   const imgLeft = PNG.sync.read(left);
   const imgRight = PNG.sync.read(right);
 
@@ -501,16 +582,26 @@ function diffImages(left: Buffer, right: Buffer): DiffResult {
     imgRight.width === width && imgRight.height === height
       ? imgRight
       : cropPngToSize(imgRight, width, height);
-  const diff = new PNG({ width, height });
+
+  let leftForDiff = croppedLeft;
+  let rightForDiff = croppedRight;
+  if (downsampleFactor > 1) {
+    leftForDiff = boxAverageDownsample(croppedLeft, downsampleFactor);
+    rightForDiff = boxAverageDownsample(croppedRight, downsampleFactor);
+  }
+
+  const diffWidth = leftForDiff.width;
+  const diffHeight = leftForDiff.height;
+  const diff = new PNG({ width: diffWidth, height: diffHeight });
   const mismatchedPixels = pixelmatch(
-    croppedLeft.data,
-    croppedRight.data,
+    leftForDiff.data,
+    rightForDiff.data,
     diff.data,
-    width,
-    height,
+    diffWidth,
+    diffHeight,
     { threshold: 0.1 },
   );
-  const totalPixels = width * height;
+  const totalPixels = diffWidth * diffHeight;
   const mismatchPct = (mismatchedPixels / totalPixels) * 100;
 
   return {
@@ -544,14 +635,22 @@ async function runPairDiff(options: {
   referenceBuffer: Buffer;
   appBuffer: Buffer;
   scores: string[];
+  downsampleFactor?: number;
 }): Promise<number> {
-  const { outputDir, sectionId, width, referenceBuffer, appBuffer, scores } =
-    options;
+  const {
+    outputDir,
+    sectionId,
+    width,
+    referenceBuffer,
+    appBuffer,
+    scores,
+    downsampleFactor = 1,
+  } = options;
 
   writeArtifact(outputDir, sectionId, width, 'ref', referenceBuffer);
   writeArtifact(outputDir, sectionId, width, 'app', appBuffer);
 
-  const result = diffImages(referenceBuffer, appBuffer);
+  const result = diffImages(referenceBuffer, appBuffer, downsampleFactor);
   writeArtifact(outputDir, sectionId, width, 'diff', result.diffPng);
 
   if (result.failed) {
@@ -562,7 +661,9 @@ async function runPairDiff(options: {
   }
 
   const dimensionSuffix = result.dimensionNote ? ` (${result.dimensionNote})` : '';
-  const line = `${sectionId} @ ${width}px — ${result.mismatchPct.toFixed(2)}%${dimensionSuffix}`;
+  const downsampleSuffix =
+    downsampleFactor > 1 ? ` (${downsampleFactor}x)` : '';
+  const line = `${sectionId} @ ${width}px — ${result.mismatchPct.toFixed(2)}%${downsampleSuffix}${dimensionSuffix}`;
   scores.push(line);
   console.log(line);
   return result.mismatchPct;
@@ -657,6 +758,8 @@ async function runSectionDiffs(options: {
         referenceBuffer,
         appBuffer,
         scores,
+        downsampleFactor:
+          capture.mode === 'art' ? ART_DOWNSAMPLE_FACTOR : 1,
       });
 
       if (mismatchPct > GATE_MAX_MISMATCH_PCT) {

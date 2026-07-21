@@ -223,6 +223,7 @@
   }
 
   .eyebrow {
+    display: block;
     font-family: var(--mono);
     font-size: var(--text-xs);
     font-weight: 500;
@@ -507,7 +508,7 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     border-left: 1px solid var(--line);
   }
 
@@ -773,6 +774,12 @@
 
   .hero-bottom {
     grid-template-columns: 1.25fr 0.75fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 

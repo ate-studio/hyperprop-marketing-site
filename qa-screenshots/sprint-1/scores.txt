@@ -2,23 +2,23 @@ nav @ 360px — 0.00%
 nav @ 560px — 0.00%
 nav @ 900px — 0.00%
 nav @ 1180px — 0.00%
-hero @ 360px — 3.67%
-hero @ 560px — 2.75%
-hero @ 900px — 2.01%
-hero @ 1180px — 0.95%
-hero-art @ 360px — 3.12%
-hero-art @ 560px — 2.46%
-hero-art @ 900px — 1.65%
-hero-art @ 1180px — 0.89%
-proof @ 360px — 0.20%
-proof @ 560px — 0.31%
+hero @ 360px — 0.65%
+hero @ 560px — 0.64%
+hero @ 900px — 0.47%
+hero @ 1180px — 0.59%
+hero-art @ 360px — 0.82% (4x)
+hero-art @ 560px — 0.66% (4x)
+hero-art @ 900px — 0.61% (4x)
+hero-art @ 1180px — 0.85% (4x)
+proof @ 360px — 0.23%
+proof @ 560px — 0.15%
 proof @ 900px — 0.19%
 proof @ 1180px — 0.30%
 hiw-card @ 360px — 0.00% (304x422 vs 304x423)
-hiw-card @ 560px — 23.66% (504x397 vs 504x396)
-hiw-card @ 900px — 19.65%
-hiw-card @ 1180px — 20.17%
-hiw-card-art @ 360px — 0.00%
-hiw-card-art @ 560px — 42.65%
-hiw-card-art @ 900px — 37.85%
-hiw-card-art @ 1180px — 39.02%
+hiw-card @ 560px — 1.18% (504x397 vs 504x396)
+hiw-card @ 900px — 1.00%
+hiw-card @ 1180px — 0.93%
+hiw-card-art @ 360px — 0.00% (4x)
+hiw-card-art @ 560px — 1.92% (4x) (502x211 vs 502x210)
+hiw-card-art @ 900px — 1.68% (4x)
+hiw-card-art @ 1180px — 1.39% (4x)
