@@ -13,5 +13,3 @@ export {
   PLACEHOLDER_FEATURED_MARKET as FEATURED_MARKET,
   PLACEHOLDER_MARKET_ROWS as MARKET_ROWS,
 } from '@/lib/data/placeholders/markets';
-
-export const FEATURED_MARKET_INDEX = 0;

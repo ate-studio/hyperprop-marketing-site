@@ -75,7 +75,6 @@ export function PricingTabs() {
           className="tabs"
           role="tablist"
           aria-label="Account size"
-          id="size-tabs"
         >
           {ACCOUNT_SIZES.map((size, index) => (
             <button
