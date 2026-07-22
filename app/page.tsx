@@ -1,8 +1,10 @@
 import { Comparison } from '@/components/landing/comparison';
 import { Faq } from '@/components/landing/faq';
+import { FinalCta } from '@/components/landing/final-cta';
 import { Footer } from '@/components/landing/footer';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import { Hero } from '@/components/landing/hero';
+import { Join } from '@/components/landing/join';
 import { Markets } from '@/components/landing/markets';
 import { Nav } from '@/components/landing/nav';
 import { Pricing } from '@/components/landing/pricing';
@@ -32,6 +34,8 @@ export default async function Home() {
         <Comparison />
         <Markets markets={markets} candles={candles} />
         <Faq />
+        <Join />
+        <FinalCta />
       </main>
       <Footer />
     </>
