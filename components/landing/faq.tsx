@@ -50,7 +50,7 @@ export function Faq() {
           <h2>Plain answers.</h2>
         </div>
 
-        <div id="faq-list">
+        <div>
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openIndex === index;
             const answerId = `${baseId}-answer-${index}`;

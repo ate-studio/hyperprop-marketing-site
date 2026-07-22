@@ -127,25 +127,6 @@
     font-feature-settings: 'tnum';
   }
 
-  /* PENDING: confirm with CTO — grid cell size */
-  .grid-bg {
-    background-image:
-      repeating-linear-gradient(
-        to right,
-        var(--grid-ink) 0,
-        var(--grid-ink) 1px,
-        transparent 1px,
-        transparent 56px
-      ),
-      repeating-linear-gradient(
-        to bottom,
-        var(--grid-ink) 0,
-        var(--grid-ink) 1px,
-        transparent 1px,
-        transparent 56px
-      );
-  }
-
   .glass {
     background: var(--glass);
     backdrop-filter: blur(16px);
@@ -1895,6 +1876,10 @@
     font-size: var(--text-sm);
     color: var(--up);
     margin-top: 14px;
+  }
+
+  .join-panel p.join-ok {
+    color: var(--up);
   }
 
   .join-ok.join-ok-visible {

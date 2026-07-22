@@ -71,7 +71,7 @@ export function Markets({ markets, candles }: MarketsProps) {
               <span>Funding</span>
               <span>24h Volume</span>
             </div>
-            <div id="mkt-rows">
+            <div>
               {rows.map((row, index) => (
                 <div
                   key={row.symbol}

@@ -4,7 +4,7 @@ import {
   FETCH_TIMEOUT_MS,
   NORTHBOOK_INDEXER_URL,
 } from '@/lib/data/config';
-import { PLACEHOLDER_PROOF_METRICS } from '@/lib/data/placeholders/proof-metrics';
+import { PLACEHOLDER_PROOF_METRICS } from '@/lib/proof-metrics';
 import {
   liveEnvelope,
   placeholderEnvelope,
