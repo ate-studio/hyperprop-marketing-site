@@ -1767,6 +1767,193 @@
     margin-top: 48px;
   }
 
+  /* join */
+  .join-grid {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .join-panel {
+    background: var(--paper-raised);
+    padding: 42px 40px;
+    display: flex;
+    flex-direction: column;
+    transition:
+      transform var(--motion-base) ease,
+      box-shadow var(--motion-base) ease;
+  }
+
+  .join-panel:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
+    position: relative;
+    z-index: 2;
+  }
+
+  .join-panel h3 {
+    font-family: var(--serif);
+    font-size: var(--text-3xl);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    margin-bottom: 12px;
+  }
+
+  .join-panel p {
+    color: var(--ink-60);
+    font-size: var(--text-base);
+    margin-bottom: 22px;
+    max-width: 420px;
+  }
+
+  #join .eyebrow {
+    margin-bottom: 14px;
+  }
+
+  .email-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-top: auto;
+  }
+
+  .email-form button {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .join-panel > .btn {
+    margin-top: auto;
+    align-self: flex-start;
+  }
+
+  #join .btn {
+    line-height: 1.4;
+  }
+
+  .join-discord {
+    background:
+      linear-gradient(165deg, rgba(88, 101, 242, 0.1), rgba(88, 101, 242, 0.02) 60%),
+      var(--paper-raised);
+  }
+
+  .btn-discord {
+    background: #5865f2;
+    color: #fff;
+    border-color: #5865f2;
+    box-shadow: var(--shadow-1);
+  }
+
+  .btn-discord:hover {
+    background: #4752c4;
+    border-color: #4752c4;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .btn-discord svg {
+    flex: none;
+  }
+
+  .email-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: 13px 22px;
+    font-family: var(--sans);
+    font-size: var(--text-base);
+    line-height: normal;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    transition: border-color var(--motion-fast);
+  }
+
+  .email-form input:focus {
+    border-color: var(--ink);
+  }
+
+  .email-form input:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .join-consent {
+    font-family: var(--mono);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.05em;
+    color: var(--ink-60);
+    margin-top: 14px;
+  }
+
+  .join-ok {
+    display: none;
+    font-family: var(--mono);
+    font-size: var(--text-sm);
+    color: var(--up);
+    margin-top: 14px;
+  }
+
+  .join-ok.join-ok-visible {
+    display: block;
+  }
+
+  /* final cta */
+  .final {
+    position: relative;
+    text-align: center;
+    padding: 120px 0;
+    background-color: var(--hero-bg-tone);
+    background-image:
+      linear-gradient(rgba(9, 9, 12, 0.62), rgba(9, 9, 12, 0.66)),
+      url('/images/final-cta.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .final h2 {
+    font-size: var(--text-hero);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+  }
+
+  .final h2 em {
+    font-style: italic;
+    color: var(--blueprint-light);
+  }
+
+  .final p {
+    color: var(--ink-60);
+    margin: 18px auto 34px;
+    max-width: 480px;
+  }
+
+  .dither {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    opacity: 0.9;
+    background:
+      conic-gradient(var(--ink) 25%, transparent 0 50%, var(--ink) 0 75%, transparent 0)
+      0 0 / 14px 14px;
+  }
+
+  .dither.tl {
+    top: 40px;
+    left: 6%;
+    mask-image: linear-gradient(135deg, #000 30%, transparent 75%);
+  }
+
+  .dither.br {
+    bottom: 40px;
+    right: 6%;
+    mask-image: linear-gradient(-45deg, #000 30%, transparent 75%);
+  }
+
 }
 
 @media (max-width: 760px) {
@@ -1798,6 +1985,10 @@
   .mkt-spot {
     position: static;
   }
+
+  .join-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1823,6 +2014,14 @@
   }
 
   .plans .plan:hover {
+    transform: none;
+  }
+
+  .join-panel:hover {
+    transform: none;
+  }
+
+  .btn-discord:hover {
     transform: none;
   }
 

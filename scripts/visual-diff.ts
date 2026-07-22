@@ -85,6 +85,19 @@ const SECTIONS: Record<string, SectionConfig> = {
     selector: '.ticker',
     appSelector: '[data-qa="ticker"]',
   },
+  join: {
+    id: 'join',
+    selector: '#join',
+    appSelector: '[data-qa="join"]',
+  },
+  final: {
+    id: 'final',
+    selector: 'section.final',
+    appSelector: '[data-qa="final-cta"]',
+    artSelector: 'section.final',
+    appArtSelector: '[data-qa="final-cta"]',
+    maskPhotoLayers: true,
+  },
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -100,6 +113,7 @@ let vendoredFontCssCache: string | null = null;
 type NormalizationPayload = {
   heroImage: string;
   hiwImages: string[];
+  finalCtaImage: string;
   tickerRows: Array<[string, string, 'u' | 'd']>;
 };
 
@@ -111,6 +125,7 @@ function buildNormalizationPayload(appUrl: string): NormalizationPayload {
     hiwImages: [1, 2, 3, 4].map(
       (index) => `${base}/images/hiw-0${index}.jpg`,
     ),
+    finalCtaImage: `${base}/images/final-cta.png`,
     tickerRows: MARKET_ROWS.map((row) => [
       `${row.symbol}-USDC`,
       `${row.change24hPct >= 0 ? '+' : ''}${row.change24hPct.toFixed(2)}`,
@@ -258,6 +273,13 @@ function buildAssetNormalizationCss(payload: NormalizationPayload): string {
       opacity: 1 !important;
     }
     ${hiwRules}
+    .final,
+    [data-qa="final-cta"] {
+      background-image: linear-gradient(rgba(9, 9, 12, 0.62), rgba(9, 9, 12, 0.66)), url('${payload.finalCtaImage}') !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+    }
   `;
 }
 
@@ -344,6 +366,10 @@ function buildPhotoLayerMaskCss(): string {
     }
     ${hiwSelectors} {
       background-image: none !important;
+    }
+    .final,
+    [data-qa="final-cta"] {
+      background-image: linear-gradient(rgba(9, 9, 12, 0.62), rgba(9, 9, 12, 0.66)) !important;
     }
   `;
 }
@@ -608,6 +634,77 @@ async function normalizeReferencePage(
       track.style.transform = 'translateX(0)';
     }
   }, tickerRows);
+
+  await page.evaluate(() => {
+    const joinSection = document.querySelector('#join');
+    if (joinSection) {
+      const panels = joinSection.querySelectorAll('.join-panel');
+      const listPanel = panels[0];
+      const discordPanel = panels[1];
+
+      if (listPanel) {
+        const listCopy = listPanel.querySelector(
+          'p:not(.eyebrow):not(.join-ok):not(.join-consent)',
+        );
+        if (listCopy) {
+          listCopy.textContent =
+            'Get the full rulebook and the monthly transparency report.';
+        }
+
+        const form = listPanel.querySelector('.email-form');
+        if (form && !listPanel.querySelector('.join-consent')) {
+          const consent = document.createElement('p');
+          consent.className = 'join-consent';
+          consent.textContent =
+            'We only email the rulebook and monthly reports. Unsubscribe any time.';
+          form.insertAdjacentElement('afterend', consent);
+        }
+
+        const joinOk = listPanel.querySelector('.join-ok') as HTMLElement | null;
+        if (joinOk) {
+          joinOk.remove();
+        }
+      }
+
+      if (discordPanel) {
+        const discordCopy = discordPanel.querySelector('p:not(.eyebrow)');
+        if (discordCopy) {
+          discordCopy.textContent =
+            'Real-time updates, chart talk, and 24/7 support.';
+        }
+      }
+    }
+
+    const finalSection = document.querySelector('section.final');
+    if (finalSection) {
+      const finalCopy = finalSection.querySelector('p');
+      if (finalCopy) {
+        finalCopy.textContent = 'One-time fee. Two rules. Every number published.';
+      }
+
+      const finalCta = finalSection.querySelector('a.btn-primary');
+      if (finalCta) {
+        finalCta.textContent = 'Choose your challenge';
+      }
+
+      const finalButtonWrap = finalSection.querySelector('.wrap > div.rv');
+      if (finalButtonWrap?.querySelector('a.btn-primary')) {
+        const cta = finalButtonWrap.querySelector('a.btn-primary');
+        finalButtonWrap.replaceWith(cta as Node);
+      }
+
+      if (!finalSection.querySelector('.dither')) {
+        const tl = document.createElement('span');
+        tl.className = 'dither tl';
+        tl.setAttribute('aria-hidden', 'true');
+        const br = document.createElement('span');
+        br.className = 'dither br';
+        br.setAttribute('aria-hidden', 'true');
+        finalSection.prepend(tl);
+        finalSection.append(br);
+      }
+    }
+  });
 }
 
 async function freezePageForCapture(
@@ -637,6 +734,12 @@ async function freezePageForCapture(
     document.querySelectorAll('.ticker-track').forEach((track) => {
       (track as HTMLElement).style.transform = 'translateX(0)';
     });
+
+    document
+      .querySelectorAll('.email-form input[type="hidden"]')
+      .forEach((input) => {
+        input.remove();
+      });
 
     const style = document.createElement('style');
     style.setAttribute('data-visual-diff', 'freeze');
@@ -1087,7 +1190,13 @@ async function main(): Promise<void> {
   await runVisualDiff(options);
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+const isCliEntry =
+  process.argv[1] !== undefined &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isCliEntry) {
+  main().catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
