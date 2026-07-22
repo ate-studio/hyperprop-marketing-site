@@ -10,7 +10,9 @@ import { cn } from '@/lib/utils';
 const NAV_LINKS = [
   { href: '#transparency', label: 'Transparency' },
   { href: '#how', label: 'How it works' },
+  { href: '#markets', label: 'Markets' },
   { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
 ] as const;
 
 export function Nav() {

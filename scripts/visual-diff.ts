@@ -63,6 +63,16 @@ const SECTIONS: Record<string, SectionConfig> = {
     selector: 'footer',
     appSelector: '[data-qa="footer"]',
   },
+  markets: {
+    id: 'markets',
+    selector: '#markets',
+    appSelector: '[data-qa="markets"]',
+  },
+  faq: {
+    id: 'faq',
+    selector: '#faq',
+    appSelector: '[data-qa="faq"]',
+  },
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -344,12 +354,33 @@ async function normalizeReferencePage(page: Page): Promise<void> {
       }
     });
 
-    document.querySelectorAll('.nav-links a').forEach((anchor) => {
-      const href = anchor.getAttribute('href');
-      if (href === '#markets' || href === '#faq') {
-        (anchor as HTMLElement).style.display = 'none';
-      }
+    const mktRot = document.getElementById('mkt-rot');
+    if (mktRot) {
+      mktRot.textContent = 'Crypto';
+      mktRot.className = 'rot';
+      mktRot.style.color = 'var(--blueprint-light)';
+      mktRot.style.fontStyle = 'italic';
+    }
+
+    document.querySelectorAll('.mkt-row').forEach((row) => {
+      row.classList.add('in');
     });
+
+    const mktTable = document.querySelector('.mkt-table');
+    if (mktTable && !mktTable.textContent?.includes('Indicative snapshot')) {
+      if (!document.getElementById('visual-diff-mkt-disclaimer')) {
+        const style = document.createElement('style');
+        style.id = 'visual-diff-mkt-disclaimer';
+        style.textContent =
+          '.mkt-disclaimer{margin:0;padding:10px 16px 14px;font-family:var(--mono);font-size:var(--text-2xs);color:var(--ink-60);text-align:center;background:var(--paper)}';
+        document.head.appendChild(style);
+      }
+
+      const disclaimer = document.createElement('p');
+      disclaimer.className = 'mkt-disclaimer';
+      disclaimer.textContent = 'Indicative snapshot · not live data';
+      mktTable.appendChild(disclaimer);
+    }
 
     const heroOdo = document.getElementById('hero-odo');
     if (heroOdo) {

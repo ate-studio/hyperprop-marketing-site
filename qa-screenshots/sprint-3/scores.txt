@@ -1,0 +1,4 @@
+transparency-selftest @ 360px — 0.00%
+transparency-selftest @ 560px — 0.00%
+transparency-selftest @ 900px — 0.00%
+transparency-selftest @ 1180px — 0.00%

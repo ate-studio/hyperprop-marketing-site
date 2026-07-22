@@ -32,3 +32,18 @@ export function formatDuration(minutes: number): string {
 export function formatPassRate(pct: number): string {
   return `${PASS_RATE_FORMATTER.format(pct)}%`;
 }
+
+export function fmtPx(value: number): string {
+  if (value >= 1000) {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+  }
+
+  if (value >= 1) {
+    return value.toFixed(value >= 100 ? 2 : 4);
+  }
+
+  return value.toFixed(8).replace(/0+$/, '').padEnd(3, '0');
+}
