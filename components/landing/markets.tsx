@@ -20,7 +20,7 @@ export function Markets({ markets, candles }: MarketsProps) {
   return (
     <section id="markets" data-qa="markets" className="sec-pad">
       <Wrap>
-        <div className="sec-head sec-head-copy">
+        <div className="sec-head sec-head-copy rv">
           <Eyebrow>Markets</Eyebrow>
           <h2>
             Trade{' '}
@@ -105,7 +105,7 @@ export function Markets({ markets, candles }: MarketsProps) {
           </div>
         </div>
 
-        <div className="sec-cta">
+        <div className="sec-cta rv">
           <Button href="#pricing" variant="primary">
             Start a challenge
           </Button>

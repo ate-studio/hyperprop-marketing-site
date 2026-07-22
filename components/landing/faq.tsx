@@ -45,12 +45,12 @@ export function Faq() {
   return (
     <section id="faq" data-qa="faq" className="sec-pad">
       <Wrap>
-        <div className="sec-head sec-head-copy">
+        <div className="sec-head sec-head-copy rv">
           <Eyebrow>FAQ</Eyebrow>
           <h2>Plain answers.</h2>
         </div>
 
-        <div>
+        <div className="rv">
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openIndex === index;
             const answerId = `${baseId}-answer-${index}`;

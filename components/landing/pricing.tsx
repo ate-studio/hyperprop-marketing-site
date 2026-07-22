@@ -7,7 +7,7 @@ export function Pricing() {
   return (
     <section id="pricing" data-qa="pricing" className="sec-pad">
       <Wrap>
-        <div className="sec-head sec-head-copy">
+        <div className="sec-head sec-head-copy rv">
           <Eyebrow>Pricing</Eyebrow>
           <h2>
             Choose your challenge. One-time fee, 100% rebated at first payout.
@@ -21,7 +21,7 @@ export function Pricing() {
 
         <PricingTabs />
 
-        <div className="freetrial">
+        <div className="freetrial rv">
           <div className="ft-head">
             <Eyebrow>Demo account</Eyebrow>
             <span className="ft-title">Free Trial</span>

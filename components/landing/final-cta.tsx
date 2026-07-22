@@ -7,13 +7,15 @@ export function FinalCta() {
       <span aria-hidden="true" className="dither tl" />
       <span aria-hidden="true" className="dither br" />
       <Wrap>
-        <h2>
+        <h2 className="rv">
           Get funded. <em>Get paid.</em>
         </h2>
-        <p>One-time fee. Two rules. Every number published.</p>
-        <Button href="#pricing" variant="primary">
-          Choose your challenge
-        </Button>
+        <p className="rv">One-time fee. Two rules. Every number published.</p>
+        <div className="rv">
+          <Button href="#pricing" variant="primary">
+            Choose your challenge
+          </Button>
+        </div>
       </Wrap>
     </section>
   );

@@ -71,7 +71,7 @@ export function Transparency({
       className="sec-pad trans sec-invert"
     >
       <Wrap>
-        <div className="sec-head sec-head-copy">
+        <div className="sec-head sec-head-copy rv">
           <Eyebrow>Transparency</Eyebrow>
           <h2>Numbers we publish. Most firms don&apos;t.</h2>
           <p>
@@ -80,7 +80,7 @@ export function Transparency({
           </p>
         </div>
 
-        <div className="trans-grid">
+        <div className="trans-grid rv-scale">
           <div className="trans-panel">
             <h3>Payout ledger — settled on-chain</h3>
             {LEDGER_PLACEHOLDER.map((entry) => (

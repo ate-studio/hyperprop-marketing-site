@@ -652,7 +652,52 @@
     width: 72px;
     height: 2px;
     background: var(--blueprint);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--motion-slowest) var(--ease-out) var(--motion-base);
+  }
+
+  .sec-head.in h2::after {
     transform: scaleX(1);
+  }
+
+  .rv {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity var(--motion-slower) ease,
+      transform var(--motion-slower) ease;
+  }
+
+  .rv.in {
+    opacity: 1;
+    transform: none;
+  }
+
+  .rv-scale {
+    opacity: 0;
+    transform: scale(0.955);
+    transition:
+      opacity var(--motion-slower) ease,
+      transform var(--motion-slower) var(--ease-out);
+  }
+
+  .rv-scale.in {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-stagger] > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity var(--motion-slower) ease,
+      transform var(--motion-slower) ease;
+  }
+
+  [data-stagger].in > * {
+    opacity: 1;
+    transform: none;
   }
 
   .hiw-stack {
@@ -2027,6 +2072,19 @@
   .ticker-track {
     animation: none;
     transform: translateX(0);
+  }
+
+  .rv,
+  .rv-scale,
+  [data-stagger] > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .sec-head h2::after {
+    transform: scaleX(1);
+    transition: none;
   }
 }
 

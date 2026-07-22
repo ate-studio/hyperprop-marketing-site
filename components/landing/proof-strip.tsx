@@ -15,7 +15,7 @@ export function ProofStrip({ metrics }: ProofStripProps) {
   return (
     <section data-qa="proof-strip" className="stats">
       <Wrap className="py-0">
-        <div className="stats-grid">
+        <div className="stats-grid" data-stagger>
           <Stat
             label="Reserve balance"
             value={formatUsd(values.reserveBalanceUsd)}

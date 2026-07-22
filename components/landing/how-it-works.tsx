@@ -107,7 +107,7 @@ export function HowItWorks() {
       <div ref={trackRef} className="hiw-track">
         <div className="hiw-pin">
           <Wrap className="w-full">
-            <div className="sec-head sec-head-copy">
+            <div className="sec-head sec-head-copy rv">
               <Eyebrow>How it works</Eyebrow>
               <h2>Four steps to a funded account.</h2>
             </div>

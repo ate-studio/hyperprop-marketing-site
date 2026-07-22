@@ -22,7 +22,7 @@ export function Join() {
   return (
     <section id="join" data-qa="join" className="sec-pad band">
       <Wrap>
-        <div className="join-grid">
+        <div className="join-grid rv-scale">
           <div className="join-panel">
             <Eyebrow>The list</Eyebrow>
             <h3>Join our mailing list.</h3>

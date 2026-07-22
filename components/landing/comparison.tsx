@@ -32,12 +32,12 @@ export function Comparison() {
   return (
     <section id="comparison" className="sec-pad">
       <Wrap>
-        <div className="sec-head sec-head-copy">
+        <div className="sec-head sec-head-copy rv">
           <Eyebrow>Comparison</Eyebrow>
           <h2>What we publish.</h2>
         </div>
 
-        <table className="cmp">
+        <table className="cmp rv-scale">
           <caption className="sr-only">
             Comparison of published transparency claims between Northbook and
             typical prop firms

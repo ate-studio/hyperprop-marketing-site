@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, Inter, STIX_Two_Text } from 'next/font/google';
 
+import { ScrollReveal } from '@/components/landing/scroll-reveal';
 import { SITE_URL } from '@/lib/site-url';
 
 import './globals.css';
@@ -59,7 +60,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${stixTwoText.variable} ${ibmPlexMono.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <ScrollReveal />
+        {children}
+      </body>
     </html>
   );
 }

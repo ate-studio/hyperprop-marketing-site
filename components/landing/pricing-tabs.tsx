@@ -70,7 +70,7 @@ export function PricingTabs() {
 
   return (
     <>
-      <div className="pricing-ctl">
+      <div className="pricing-ctl rv">
         <div
           className="tabs"
           role="tablist"
@@ -101,7 +101,13 @@ export function PricingTabs() {
         </Button>
       </div>
 
-      <div className="plans" id="plans" role="tabpanel" aria-labelledby={`size-tab-${selectedSize}`}>
+      <div
+        className="plans rv"
+        data-stagger
+        id="plans"
+        role="tabpanel"
+        aria-labelledby={`size-tab-${selectedSize}`}
+      >
         {PLANS.map((plan) => (
           <div key={plan.name} className={planClassName(plan.accent)}>
             <div>
