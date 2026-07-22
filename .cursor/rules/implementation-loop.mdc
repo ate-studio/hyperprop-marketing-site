@@ -38,7 +38,7 @@ For every sprint spec you receive:
 - Toggling `.sec-invert` on any section's parent re-themes every child with nothing left unstyled or broken. Check in the dev server, not by source inspection alone.
 
 ### 4. Color & type discipline
-- No color outside the blueprint family and the `--up`/`--down` semantic tokens appears anywhere, except the Discord brand button (`#5865F2`).
+- No color outside the blueprint family and the `--up`/`--down` semantic tokens appears anywhere, except third-party brand marks: the Discord button (`#5865F2`) and the Hyperliquid logo in the venue strip (`#97fce4`, ported verbatim from the reference SVG). Brand-mark colors never leak into surrounding chrome.
 - Type families follow design doc §3–§4: display headings, prices, and big display numbers render in STIX Two Text; data-row/tabular numerals, uppercase labels, tags, and tx-hashes render in IBM Plex Mono; prose renders in Inter. Where the reference HTML's computed style for the equivalent element differs from this rule of thumb (e.g. mono stat values in `.stat .v`, sans uppercase `.hiw-card h3` titles), the reference wins. Confirm via computed styles in devtools.
 
 ### 5. Responsive behavior
