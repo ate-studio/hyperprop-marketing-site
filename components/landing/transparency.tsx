@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Wrap } from '@/components/ui/wrap';
+import { formatIndexerProvenance } from '@/lib/data/format-provenance';
+import type { Sourced } from '@/lib/data/sourced';
 import { formatPassRate, formatUsd } from '@/lib/format';
-import { PLACEHOLDER_PROOF_METRICS } from '@/lib/proof-metrics';
 import {
   formatLedgerAmount,
   LEDGER_PLACEHOLDER,
@@ -14,7 +15,7 @@ import {
 import type { ProofMetrics } from '@/lib/types';
 
 export interface TransparencyProps {
-  metrics?: ProofMetrics;
+  metrics: Sourced<ProofMetrics>;
   payoutDays?: readonly number[];
 }
 
@@ -58,9 +59,11 @@ function cnDmCol(count: number, maxDay: number): string {
 }
 
 export function Transparency({
-  metrics = PLACEHOLDER_PROOF_METRICS,
+  metrics,
   payoutDays = PAYOUT_DAYS,
 }: TransparencyProps) {
+  const values = metrics.data;
+
   return (
     <section
       id="transparency"
@@ -102,20 +105,24 @@ export function Transparency({
             <h3>This month, in public</h3>
             <div className="big-metric">
               <div className="bm">
-                <div className="v num">{formatUsd(metrics.monthlyPaidOutUsd)}</div>
+                <div className="v num">{formatUsd(values.monthlyPaidOutUsd)}</div>
                 <div className="l">Paid out</div>
               </div>
               <div className="bm">
                 <div className="v num">
-                  {formatPassRate(metrics.publishedPassRatePct)}
+                  {formatPassRate(values.publishedPassRatePct)}
                 </div>
                 <div className="l">Pass rate</div>
               </div>
               <div className="bm">
-                <div className="v num">{metrics.payoutCount30d}</div>
+                <div className="v num">{values.payoutCount30d}</div>
                 <div className="l">Payouts</div>
               </div>
             </div>
+
+            <p className="data-provenance data-provenance-panel">
+              {formatIndexerProvenance(metrics.source, metrics.asOf)}
+            </p>
 
             <PayoutChart payoutDays={payoutDays} />
 

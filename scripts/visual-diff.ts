@@ -6,6 +6,8 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { chromium, type Browser, type Page } from 'playwright';
 
+import { MARKET_ROWS } from '../lib/markets';
+
 const VIEWPORTS = [360, 560, 900, 1180] as const;
 const SELFTEST_MAX_MISMATCH_PCT = 0.05;
 const GATE_MAX_MISMATCH_PCT = 2;
@@ -73,6 +75,16 @@ const SECTIONS: Record<string, SectionConfig> = {
     selector: '#faq',
     appSelector: '[data-qa="faq"]',
   },
+  venue: {
+    id: 'venue',
+    selector: 'section:has(svg[aria-label="Hyperliquid"])',
+    appSelector: '[data-qa="venue"]',
+  },
+  ticker: {
+    id: 'ticker',
+    selector: '.ticker',
+    appSelector: '[data-qa="ticker"]',
+  },
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,6 +100,7 @@ let vendoredFontCssCache: string | null = null;
 type NormalizationPayload = {
   heroImage: string;
   hiwImages: string[];
+  tickerRows: Array<[string, string, 'u' | 'd']>;
 };
 
 function buildNormalizationPayload(appUrl: string): NormalizationPayload {
@@ -98,6 +111,11 @@ function buildNormalizationPayload(appUrl: string): NormalizationPayload {
     hiwImages: [1, 2, 3, 4].map(
       (index) => `${base}/images/hiw-0${index}.jpg`,
     ),
+    tickerRows: MARKET_ROWS.map((row) => [
+      `${row.symbol}-USDC`,
+      `${row.change24hPct >= 0 ? '+' : ''}${row.change24hPct.toFixed(2)}`,
+      row.change24hPct >= 0 ? 'u' : 'd',
+    ]),
   };
 }
 
@@ -336,8 +354,11 @@ async function applyPhotoLayerMask(page: Page): Promise<void> {
   });
 }
 
-async function normalizeReferencePage(page: Page): Promise<void> {
-  await page.evaluate(() => {
+async function normalizeReferencePage(
+  page: Page,
+  tickerRows: Array<[string, string, 'u' | 'd']>,
+): Promise<void> {
+  await page.evaluate((rows) => {
     document.querySelectorAll('.logo').forEach((logo) => {
       const mark = logo.querySelector('.lm');
       logo.textContent = '';
@@ -537,7 +558,56 @@ async function normalizeReferencePage(page: Page): Promise<void> {
         textNode = textWalker.nextNode();
       }
     }
-  });
+
+    if (!document.getElementById('visual-diff-provenance-styles')) {
+      const style = document.createElement('style');
+      style.id = 'visual-diff-provenance-styles';
+      style.textContent =
+        '.data-provenance{margin:0;padding:10px 0 0;font-family:var(--mono);font-size:var(--text-2xs);color:var(--ink-60);text-align:center}.data-provenance-panel{padding:0 4px 18px;text-align:left}';
+      document.head.appendChild(style);
+    }
+
+    const statsSection = document.querySelector('section.stats .wrap');
+    if (
+      statsSection &&
+      !statsSection.textContent?.includes('Indicative figures')
+    ) {
+      const proofProvenance = document.createElement('p');
+      proofProvenance.className = 'data-provenance';
+      proofProvenance.textContent = 'Indicative figures · pending indexer';
+      statsSection.appendChild(proofProvenance);
+    }
+
+    const bigMetric = transparencySection?.querySelector('.big-metric');
+    if (
+      bigMetric &&
+      !transparencySection?.textContent?.includes('Indicative figures')
+    ) {
+      const transProvenance = document.createElement('p');
+      transProvenance.className = 'data-provenance data-provenance-panel';
+      transProvenance.textContent = 'Indicative figures · pending indexer';
+      bigMetric.insertAdjacentElement('afterend', transProvenance);
+    }
+
+    const track = document.getElementById('ticker');
+    if (track) {
+      track.innerHTML = '';
+      for (let copy = 0; copy < 2; copy += 1) {
+        const half = document.createElement('div');
+        half.className = 'ticker-half';
+        half.style.display = 'flex';
+        half.style.gap = '14px';
+        rows.forEach(([symbol, change, direction]) => {
+          const item = document.createElement('span');
+          item.className = 't-item';
+          item.innerHTML = `<span>${symbol}</span><span class="${direction}">${change}%</span>`;
+          half.appendChild(item);
+        });
+        track.appendChild(half);
+      }
+      track.style.transform = 'translateX(0)';
+    }
+  }, tickerRows);
 }
 
 async function freezePageForCapture(
@@ -549,7 +619,7 @@ async function freezePageForCapture(
   await injectVendoredFonts(page);
 
   if (options.isReference) {
-    await normalizeReferencePage(page);
+    await normalizeReferencePage(page, options.normalizationPayload.tickerRows);
     await injectProofStripReferenceLayout(page);
   }
 
@@ -562,6 +632,10 @@ async function freezePageForCapture(
   await page.evaluate(() => {
     document.querySelectorAll('.rv, .rv-scale, [data-stagger]').forEach((element) => {
       element.classList.add('in');
+    });
+
+    document.querySelectorAll('.ticker-track').forEach((track) => {
+      (track as HTMLElement).style.transform = 'translateX(0)';
     });
 
     const style = document.createElement('style');

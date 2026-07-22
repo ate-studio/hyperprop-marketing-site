@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 
-type CandlePoint = {
+export type CandlePoint = {
   o: number;
   c: number;
   h: number;
@@ -16,7 +16,10 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-function generateCandlePoints(spotIndex: number, count = 18): CandlePoint[] {
+export function generatePlaceholderCandles(
+  spotIndex: number,
+  count = 18,
+): CandlePoint[] {
   const rnd = seededRandom((spotIndex + 1) * 9973);
   let price = 50;
   const points: CandlePoint[] = [];
@@ -34,11 +37,10 @@ function generateCandlePoints(spotIndex: number, count = 18): CandlePoint[] {
   return points;
 }
 
-export function renderMarketCandles(spotIndex: number): ReactElement[] {
-  const candleCount = 18;
+export function renderMarketCandles(points: CandlePoint[]): ReactElement[] {
+  const candleCount = points.length;
   const candleWidth = 260 / candleCount;
   const bodyWidth = candleWidth * 0.52;
-  const points = generateCandlePoints(spotIndex, candleCount);
   const highAll = Math.max(...points.map((point) => point.h));
   const lowAll = Math.min(...points.map((point) => point.l));
 
