@@ -30,7 +30,7 @@ For every sprint spec you receive:
 
 ### 2. Design token compliance
 - Zero raw hex colors, raw px font-sizes, raw border-radius, or one-off transition timings anywhere under `components/` or `app/` outside `globals.css` / `tailwind.config.ts`.
-- Verify with: `grep -rn "#[0-9a-fA-F]\{3,6\}\|[0-9]\+px" components/ app/*.tsx` — arbitrary Tailwind values referencing `var(--token)` are fine; literal hex/px are not.
+- Verify with: `grep -rn "#[0-9a-fA-F]\{3,6\}\|[0-9]\+px" components/ app/*.tsx` — arbitrary Tailwind values referencing `var(--token)` are fine; literal hex/px are not. Sole carve-out: brand-mark fills inside `components/landing/hyperliquid-logo.tsx` (artwork data per gate 4's brand exception, not styling) — any other hit fails.
 - Zero inline `style={...}` attributes in components. Verify with: `grep -rn "style=" components/ app/ --include="*.tsx"` — must return nothing. Per-instance values (e.g. a card's art image) become CSS classes or data-attribute rules in `globals.css`, not inline styles.
 - Any color/alpha literal (e.g. `rgba(...)`) that appears more than once in `globals.css` is promoted to a `:root` token and referenced via `var()` — define once, reuse everywhere.
 
