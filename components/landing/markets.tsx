@@ -1,16 +1,21 @@
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Wrap } from '@/components/ui/wrap';
+import { formatMarketsProvenance } from '@/lib/data/format-provenance';
+import type { MarketsSnapshot } from '@/lib/data/hyperliquid';
+import type { Sourced } from '@/lib/data/sourced';
 import { fmtPx } from '@/lib/format';
-import { renderMarketCandles } from '@/lib/market-candles';
-import {
-  FEATURED_MARKET_INDEX,
-  MARKET_ROWS,
-} from '@/lib/markets';
+import { renderMarketCandles, type CandlePoint } from '@/lib/market-candles';
 import { cn } from '@/lib/utils';
 
-export function Markets() {
-  const featured = MARKET_ROWS[FEATURED_MARKET_INDEX]!;
+export interface MarketsProps {
+  markets: Sourced<MarketsSnapshot>;
+  candles: Sourced<CandlePoint[]>;
+}
+
+export function Markets({ markets, candles }: MarketsProps) {
+  const { rows, featured } = markets.data;
+  const featuredRowIndex = rows.findIndex((row) => row.symbol === featured.symbol);
 
   return (
     <section id="markets" data-qa="markets" className="sec-pad">
@@ -52,7 +57,7 @@ export function Markets() {
                   {featured.change24hPct.toFixed(2)}%
                 </span>
                 <svg viewBox="0 0 260 84" aria-hidden="true" id="sp-chart">
-                  {renderMarketCandles(FEATURED_MARKET_INDEX)}
+                  {renderMarketCandles(candles.data)}
                 </svg>
               </div>
             </div>
@@ -67,10 +72,14 @@ export function Markets() {
               <span>24h Volume</span>
             </div>
             <div id="mkt-rows">
-              {MARKET_ROWS.map((row, index) => (
+              {rows.map((row, index) => (
                 <div
                   key={row.symbol}
-                  className={cn('mkt-row', 'in', index === 0 && 'active')}
+                  className={cn(
+                    'mkt-row',
+                    'in',
+                    index === featuredRowIndex && 'active',
+                  )}
                 >
                   <span className="sym">
                     {row.symbol}-USDC<small>{row.name}</small>
@@ -91,7 +100,7 @@ export function Markets() {
               <a href="#">TERMINAL -&gt;</a>
             </div>
             <p className="mkt-disclaimer">
-              Indicative snapshot · not live data
+              {formatMarketsProvenance(markets.source, markets.asOf)}
             </p>
           </div>
         </div>
